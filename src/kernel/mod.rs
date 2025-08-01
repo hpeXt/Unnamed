@@ -251,11 +251,6 @@ impl Kernel {
         &self.message_bus_handle
     }
     
-    /// 获取存储实例
-    pub fn get_storage(&self) -> &Arc<Storage> {
-        &self.storage
-    }
-    
     /// 获取插件加载器的可变引用
     pub fn get_plugin_loader_mut(&mut self) -> &mut PluginLoader {
         &mut self.plugin_loader

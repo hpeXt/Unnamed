@@ -34,6 +34,14 @@ keyring_service = "minimal-kernel"
 auto_save_keyring = true
 # 密钥派生轮数
 key_derivation_rounds = 100000
+# 是否使用系统 keyring（macOS Keychain / Windows Credential Manager / Linux Secret Service）
+use_keyring = true
+# keyring 访问超时时间（秒）- 给用户足够时间输入系统密码
+keyring_timeout_secs = 30
+# 私钥文件路径（当 use_keyring = false 时使用）
+# private_key_file = "~/.minimal-kernel/identity.key"
+# 是否允许从环境变量 MINIMAL_KERNEL_PRIVATE_KEY 加载私钥
+allow_env_key = true
 
 [message_bus]
 # 消息缓冲区大小
@@ -52,13 +60,3 @@ color = true
 # file = "logs/kernel.log"
 # 是否启用详细模式
 verbose = false
-
-[identity]
-# 是否使用系统 keyring（macOS Keychain / Windows Credential Manager / Linux Secret Service）
-use_keyring = true
-# keyring 访问超时时间（秒）- 给用户足够时间输入系统密码
-keyring_timeout_secs = 30
-# 私钥文件路径（当 use_keyring = false 时使用）
-# private_key_file = "~/.minimal-kernel/identity.key"
-# 是否允许从环境变量 MINIMAL_KERNEL_PRIVATE_KEY 加载私钥
-allow_env_key = true
