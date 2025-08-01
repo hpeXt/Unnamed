@@ -17,10 +17,6 @@ categories = ["development-tools"]
 name = "minimal-kernel"
 path = "src/main.rs"
 
-# 示例程序
-[[example]]
-name = "logging_examples"
-path = "examples/logging_examples.rs"
 
 [dependencies]
 # 插件系统核心
