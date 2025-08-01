@@ -90,6 +90,11 @@ out/
 *.so
 *.dylib
 
+# Frontend build artifacts
+frontend/dist/
+frontend/node_modules/
+frontend/.cache/
+
 # Documentation build
 docs/_build/
 docs/.doctrees/

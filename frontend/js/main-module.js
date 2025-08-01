@@ -3,13 +3,13 @@
 // 导入 Tauri API 封装
 import { invoke, isTauri, getVersion, listen, PluginMessageBus } from './tauri-api.js';
 // 导入引导管理器
-import { onboarding } from './onboarding/onboarding.js';
+import { onboarding } from '../components/onboarding/onboarding.js';
 // 导入插件创建器
-import { pluginCreator } from './plugin-creator/plugin-creator.js';
+import { pluginCreator } from '../components/plugin-creator/plugin-creator.js';
 // 导入插件选择器
-import { pluginSelector } from './plugin-selector/plugin-selector.js';
+import { pluginSelector } from '../components/plugin-selector/plugin-selector.js';
 // 导入调试控制台
-import { DebugConsoleManager } from './debug-console/debug-console.js';
+import { DebugConsoleManager } from '../components/debug-console/debug-console.js';
 
 console.log('Minimal Kernel Dashboard - Loading (Module)...');
 
