@@ -1,0 +1,105 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    outputs:
+      release_id: ${{ steps.create-release.outputs.id }}
+      upload_url: ${{ steps.create-release.outputs.upload_url }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Create Release
+      id: create-release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref_name }}
+        release_name: Minimal Kernel ${{ github.ref_name }}
+        draft: false
+        prerelease: false
+        body: |
+          ## 🎉 Minimal Kernel ${{ github.ref_name }}
+          
+          ### 📦 下载安装
+          - **macOS**: `Minimal.Kernel.Dashboard_${{ github.ref_name }}_x64.dmg`
+          - **Windows**: `Minimal.Kernel.Dashboard_${{ github.ref_name }}_x64.msi`
+          - **Linux**: `minimal-kernel-dashboard_${{ github.ref_name }}_amd64.deb`
+          
+          ### 📝 更新内容
+          请查看 [CHANGELOG](https://github.com/hpeXt/minimal-kernel/blob/main/CHANGELOG.md) 了解详细更新内容。
+          
+          ### 🚀 快速开始
+          1. 下载对应平台的安装包
+          2. 按照 [安装指南](https://github.com/hpeXt/minimal-kernel/blob/main/INSTALL.md) 进行安装
+          3. 启动应用，开始使用！
+
+  build-tauri:
+    needs: create-release
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'macos-latest'
+            args: '--target universal-apple-darwin'
+          - platform: 'ubuntu-22.04'
+            args: ''
+          - platform: 'windows-latest'
+            args: ''
+
+    runs-on: ${{ matrix.platform }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    
+    - name: Install Rust stable
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: wasm32-unknown-unknown
+    
+    - name: Rust cache
+      uses: swatinem/rust-cache@v2
+      with:
+        workspaces: './src-tauri -> target'
+    
+    - name: Install dependencies (Ubuntu only)
+      if: matrix.platform == 'ubuntu-22.04'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libwebkit2gtk-4.1-dev \
+          build-essential \
+          curl \
+          wget \
+          file \
+          libssl-dev \
+          libgtk-3-dev \
+          libayatana-appindicator3-dev \
+          librsvg2-dev
+    
+    - name: Build plugins
+      run: |
+        chmod +x build-plugins.sh
+        ./build-plugins.sh
+    
+    - name: Build Tauri App
+      uses: tauri-apps/tauri-action@v0
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        releaseId: ${{ needs.create-release.outputs.release_id }}
+        args: ${{ matrix.args }}

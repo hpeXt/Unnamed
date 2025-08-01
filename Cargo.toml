@@ -1,0 +1,118 @@
+[workspace]
+members = [".", "plugin-sdk", "plugins/storage-test", "src-tauri"]
+exclude = ["plugins/hello", "plugins/echo", "plugins/test_sender", "plugins/test_receiver", "plugins/system-stats-collector"]
+
+[package]
+name = "minimal-kernel"
+version = "0.1.0"
+edition = "2021"
+authors = ["Long-life Geek"]
+description = "最小化内核 - 长寿极客的数字孪生平台"
+license = "MIT"
+repository = "https://github.com/long-life-geek/minimal-kernel"
+keywords = ["kernel", "plugin-system", "digital-twin", "local-first"]
+categories = ["development-tools"]
+
+[[bin]]
+name = "minimal-kernel"
+path = "src/main.rs"
+
+# 示例程序
+[[example]]
+name = "logging_examples"
+path = "examples/logging_examples.rs"
+
+[dependencies]
+# 插件系统核心
+extism = "1.11"                             # WASM 插件运行时
+extism-convert = "1.11"                     # 类型转换工具
+
+# 异步运行时
+tokio = { version = "1.46", features = ["full"] }
+tokio-stream = "0.1"                        # 异步流处理
+
+# 存储层
+sqlx = { version = "0.8", features = [
+    "runtime-tokio-rustls",                 # 异步运行时
+    "sqlite",                               # SQLite 支持
+    "json",                                 # JSON 列支持
+    "chrono",                               # 时间类型
+    "migrate"                               # 数据库迁移
+]}
+
+# 身份管理
+alloy = { version = "1.0", features = [
+    "signers",                              # 签名功能
+    "signer-local",                         # 本地签名器
+    "providers",                            # 以太坊提供者
+]}
+keyring = "2.3"                             # 跨平台密钥存储
+hex = "0.4"                                 # 十六进制编解码
+thiserror = "1.0"                           # 专业错误处理
+
+# 序列化
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8"                                # 配置文件
+
+# 错误处理
+anyhow = "1.0"                              # 简化错误处理
+
+# 日志
+tracing = "0.1"                             # 结构化日志
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-appender = "0.2"                    # 日志文件轮转
+
+# 工具库
+directories = "5.0"                         # 跨平台目录路径
+clap = { version = "4.5", features = ["derive"] }  # CLI 参数解析
+clap_complete = "4.5"                       # CLI 自动补全
+config = "0.14"                             # 统一配置管理
+glob = "0.3"                                # 文件模式匹配（保留兼容性）
+walkdir = "2.4"                             # 目录遍历（替代 glob）
+notify = "6.1"                              # 文件监控，热重载插件
+
+# 时间处理
+chrono = { version = "0.4", features = ["serde"] }
+
+# UUID 生成
+uuid = { version = "1.8", features = ["v4", "serde"] }
+
+# 全局状态管理
+lazy_static = "1.4"
+
+# 并发工具
+parking_lot = "0.12"
+once_cell = "1.19"
+
+# 加密功能
+chacha20poly1305 = "0.10"                   # 加密算法
+argon2 = "0.5"                              # 密码哈希
+rand = "0.8"                                # 随机数生成
+
+# P2P 通信准备（可选）
+libp2p = { version = "0.53", optional = true }     # P2P 网络库
+quinn = { version = "0.11", optional = true }      # QUIC 传输
+
+# HTTP 客户端（可选）
+reqwest = { version = "0.12", features = ["json"], optional = true }
+
+[dev-dependencies]
+# 测试框架
+tokio-test = "0.4"
+tempfile = "3.10"                           # 临时文件测试
+wiremock = "0.6"                            # HTTP 模拟
+tracing-test = "0.2"                        # tracing 测试工具
+
+# 基准测试
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[build-dependencies]
+# 自动生成代码
+serde_json = "1.0"
+anyhow = "1.0"
+
+[features]
+default = []
+p2p = ["libp2p", "quinn"]                  # P2P 功能
+http = ["reqwest"]                          # HTTP 客户端功能

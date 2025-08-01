@@ -1,0 +1,50 @@
+[package]
+name = "cs-dashboard"
+version = "0.1.0"
+description = "Minimal Kernel Dashboard - 插件驱动的仪表板"
+authors = ["Minimal Kernel Team"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2.0", features = [] }
+
+[dependencies]
+# Tauri 核心
+tauri = { version = "2.0", features = [] }
+
+# 集成现有内核
+minimal-kernel = { path = ".." }
+
+# 序列化
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# 异步运行时（与内核保持一致）
+tokio = { version = "1.46", features = ["full"] }
+
+# 日志（与内核保持一致）
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# UUID 用于容器管理
+uuid = { version = "1.8", features = ["v4", "serde"] }
+
+# 并发工具
+parking_lot = "0.12"
+
+# 错误处理
+anyhow = "1.0"
+
+# 时间处理
+chrono = { version = "0.4", features = ["serde"] }
+
+# 系统监控
+sysinfo = "0.30"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
+
+[[bin]]
+name = "cs-dashboard"
+path = "src/main.rs"

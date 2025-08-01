@@ -1,0 +1,64 @@
+# 最小化内核配置文件
+# 这是一个示例配置文件，展示了所有可配置的选项
+
+[database]
+# 数据库连接URL
+url = "sqlite:data.db"
+# 最大连接数
+max_connections = 10
+# 连接超时时间（秒）
+timeout = 30
+# 是否启用自动迁移
+auto_migrate = true
+
+[plugins]
+# 插件目录
+directory = "plugins"
+# 是否自动加载插件
+auto_load = true
+# 启用的插件列表（空表示加载所有发现的插件）
+enabled = [
+    "hello",
+    "echo", 
+    "storage-test"
+]
+# 禁用的插件列表
+disabled = []
+# 插件超时时间（毫秒）
+timeout_ms = 5000
+
+[identity]
+# 密钥环服务名称
+keyring_service = "minimal-kernel"
+# 是否启用自动保存到密钥环
+auto_save_keyring = true
+# 密钥派生轮数
+key_derivation_rounds = 100000
+
+[message_bus]
+# 消息缓冲区大小
+buffer_size = 1000
+# 消息超时时间（毫秒）
+timeout_ms = 1000
+# 是否启用消息持久化
+enable_persistence = false
+
+[logging]
+# 日志级别: trace, debug, info, warn, error
+level = "info"
+# 是否启用彩色输出
+color = true
+# 日志文件路径（可选）
+# file = "logs/kernel.log"
+# 是否启用详细模式
+verbose = false
+
+[identity]
+# 是否使用系统 keyring（macOS Keychain / Windows Credential Manager / Linux Secret Service）
+use_keyring = true
+# keyring 访问超时时间（秒）- 给用户足够时间输入系统密码
+keyring_timeout_secs = 30
+# 私钥文件路径（当 use_keyring = false 时使用）
+# private_key_file = "~/.minimal-kernel/identity.key"
+# 是否允许从环境变量 MINIMAL_KERNEL_PRIVATE_KEY 加载私钥
+allow_env_key = true

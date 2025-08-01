@@ -1,0 +1,93 @@
+{
+  "productName": "Minimal Kernel Dashboard",
+  "version": "0.1.0",
+  "identifier": "com.minimalkernel.dashboard",
+  "build": {
+    "beforeBuildCommand": "",
+    "beforeDevCommand": "",
+    "frontendDist": "../src"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Minimal Kernel Dashboard",
+        "label": "main",
+        "url": "/",
+        "width": 1400,
+        "height": 900,
+        "resizable": true,
+        "fullscreen": false,
+        "alwaysOnTop": false,
+        "center": true,
+        "decorations": true,
+        "transparent": false,
+        "visible": true
+      }
+    ],
+    "security": {
+      "csp": null,
+      "capabilities": [
+        {
+          "identifier": "app-commands",
+          "description": "Allow all app custom commands",
+          "windows": ["*"],
+          "permissions": [
+            {
+              "identifier": "allow-app-commands",
+              "allow": [
+                "create_plugin_container",
+                "remove_plugin_container",
+                "list_containers",
+                "apply_layout",
+                "save_layout",
+                "list_layouts",
+                "get_plugins",
+                "send_to_plugin",
+                "subscribe_data",
+                "unsubscribe_data",
+                "reload_plugins",
+                "get_ui_subscriptions",
+                "unregister_ui_plugin",
+                "is_app_ready",
+                "create_inline_widget",
+                "remove_inline_widget",
+                "list_inline_widgets",
+                "update_inline_widget",
+                "get_system_stats",
+                "get_processes",
+                "start_system_monitoring"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["app", "dmg"],
+    "category": "DeveloperTool",
+    "copyright": "Copyright © 2025 Minimal Kernel Team",
+    "shortDescription": "插件驱动的数据分析仪表板",
+    "longDescription": "基于最小化内核的本地优先数据聚合与分析平台，支持无限扩展的插件系统。",
+    "macOS": {
+      "frameworks": [],
+      "exceptionDomain": "",
+      "signingIdentity": null,
+      "providerShortName": null,
+      "entitlements": null
+    },
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": ""
+    },
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}

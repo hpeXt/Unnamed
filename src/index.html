@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimal Kernel Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <header id="app-header">
+            <h1>Minimal Kernel Dashboard</h1>
+            <div class="header-actions">
+                <button id="add-widget">添加插件</button>
+                <button id="layout-settings">布局设置</button>
+            </div>
+        </header>
+        
+        <main id="dashboard-container">
+            <div id="dashboard-grid" class="grid-container">
+                <!-- 插件容器将动态插入这里 -->
+                <div style="padding: 40px; text-align: center; color: #8E8E93;">
+                    <h2>欢迎使用 Minimal Kernel Dashboard</h2>
+                    <p>点击上方"添加插件"按钮开始使用</p>
+                </div>
+            </div>
+        </main>
+        
+        <footer id="app-footer">
+            <div class="status-bar">
+                <span id="plugin-count">插件: 0</span>
+                <span id="memory-usage">内存: --</span>
+                <span id="system-time">--:--:--</span>
+            </div>
+        </footer>
+    </div>
+
+    <script type="module" src="main-module.js"></script>
+</body>
+</html>

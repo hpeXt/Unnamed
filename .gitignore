@@ -1,0 +1,339 @@
+# Rust
+/target
+Cargo.lock
+# Plugin targets
+plugins/*/target
+# Plugin builds
+plugins/**/*.wasm
+plugins/**/pkg
+
+# Tauri
+src-tauri/target
+src-tauri/WixTools
+src-tauri/.DS_Store
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite-journal
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*~
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependencies
+node_modules/
+.npm
+.yarn-integrity
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.pnp.*
+
+# Testing
+coverage/
+*.lcov
+.nyc_output
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+
+# Build outputs
+dist/
+build/
+out/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Documentation build
+docs/_build/
+docs/.doctrees/
+site/
+
+# Python (for potential Python plugins)
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.Python
+venv/
+env/
+ENV/
+
+# Local configuration
+kernel.toml
+example-config.toml
+*.local.toml
+
+# Certificates
+*.pem
+*.key
+*.crt
+
+# Archives
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Misc
+.cache/
+.parcel-cache/
+.nuxt/
+.next/
+.svelte-kit/
+
+# Claude related files
+CLAUDE.md
+.claude/
+*.claude
+claude.config
+.clauderc
+
+# Documentation (internal)
+docs/
+*.md
+!README.md
+
+# Scripts and examples
+*.sh
+scripts/
+examples/
+test*.html
+*.py
+create*.py
+
+# Build scripts
+build-*.sh
+run-*.sh
+
+# Personal data and development documents
+PROGRESS.md
+HEALTH_COMPONENT_ARCHITECTURE.md
+KERNEL_TEST_REPORT.md
+MACOS_APP_REQUIREMENTS.md
+PLUGIN_DRIVEN_COMPONENT_ARCHITECTURE.md
+PLUGIN_DRIVEN_DASHBOARD_ARCHITECTURE.md
+PLUGIN_LOADING_TEST.md
+TEST_GUIDE.md
+CURRENT_ARCHITECTURE.md
+TODO.md
+NOTES.md
+personal/
+private/
+*.personal
+*.private
+*.local.md
+
+# Development progress files
+roadmap/
+planning/
+drafts/
+*.draft
+*.wip
+*.todo
+
+# Personal configuration
+.personal-config/
+.local-settings/
+user-data/
+user-config/
+
+# Sensitive data
+secrets/
+credentials/
+*.secret
+*.key
+*.pem
+*.crt
+*.pfx
+*.p12
+
+# Backup and temporary work files
+*.backup
+*.bak.*
+*.orig
+*.save
+*.autosave
+*.recovered
+
+# Editor session files
+.session.vim
+.vimsession
+*.kate-swp
+.ropeproject/
+
+# macOS extended attributes
+.AppleDouble
+.LSOverride
+Icon
+*.icloud
+
+# Windows
+$RECYCLE.BIN/
+*.lnk
+*.stackdump
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# Screenshots and media
+screenshots/
+screen-recordings/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.mp4
+*.mov
+*.avi
+*.mkv
+
+# Debugging output
+debug/
+debug.log
+*.debug
+trace/
+*.trace
+
+# Performance profiling
+perf/
+*.prof
+*.profdata
+*.profraw
+flamegraph.svg
+
+# Crash dumps
+crash_dumps/
+*.dmp
+*.core
+*.crashlog
+
+# Build artifacts not caught by standard patterns
+obj/
+bin/
+*.o
+*.a
+*.lib
+*.dll.a
+*.dylib.dSYM/
+
+# Package files
+*.dmg
+*.msi
+*.msm
+*.msp
+*.pkg
+*.rpm
+*.snap
+*.flatpak
+
+# Virtual environments (for Python plugins)
+.venv/
+.virtualenv/
+virtualenv/
+pipenv/
+
+# Rust specific
+**/*.rs.bk
+*.rustfmt
+
+# WASM specific
+*.wasm.map
+wasm-pack.log
+
+# Local test data
+test-data/
+test-results/
+*.test-output
+
+# User specific files
+.user/
+.users/
+user-*/
+users/*/
+
+# Temporary download files
+downloads/
+*.download
+*.part
+*.partial
+
+# Local database backups
+db-backup/
+*.sql.backup
+*.db.backup
+
+# Analysis and reports (non-code)
+reports/
+analysis/
+metrics/
+statistics/
+*.report
+*.analysis
+
+# Meeting notes and discussions
+meetings/
+discussions/
+*.meeting
+*.discussion
+
+# External documentation
+external-docs/
+references/
+research/
+*.research
+
+# Experimental code
+experiments/
+sandbox/
+playground/
+*.experiment
+*.sandbox

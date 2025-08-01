@@ -1,0 +1,14 @@
+{
+    "name": "system-monitor",
+    "version": "1.0.0",
+    "description": "系统资源监控插件",
+    "author": "Minimal Kernel Team",
+    "type": "ui",
+    "main": "index.js",
+    "permissions": [
+        "system.read"
+    ],
+    "config": {
+        "refreshInterval": 1000
+    }
+}

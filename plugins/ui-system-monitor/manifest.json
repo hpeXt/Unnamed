@@ -1,0 +1,16 @@
+{
+  "name": "system-monitor",
+  "version": "1.0.0",
+  "type": "ui",
+  "render_mode": "webview",
+  "entry": "index.html",
+  "description": "系统资源监控插件",
+  "author": "Minimal Kernel Team",
+  "permissions": ["data:read", "system:stats"],
+  "layout_hints": {
+    "min_width": 300,
+    "min_height": 200,
+    "preferred_aspect_ratio": 1.5,
+    "resizable": true
+  }
+}

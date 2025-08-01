@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统监控</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 16px;
+            background: #1A1A1A;
+            color: #FFFFFF;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 14px;
+        }
+        
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        
+        .stat-card {
+            background: #2A2A2A;
+            border: 1px solid #3A3A3A;
+            border-radius: 4px;
+            padding: 16px;
+        }
+        
+        .stat-label {
+            color: #8E8E93;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #00D9FF;
+        }
+        
+        .chart-container {
+            margin-top: 16px;
+            height: 200px;
+            background: #2A2A2A;
+            border: 1px solid #3A3A3A;
+            border-radius: 4px;
+            padding: 16px;
+        }
+        
+        #cpu-chart {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="stat-grid">
+        <div class="stat-card">
+            <div class="stat-label">CPU 使用率</div>
+            <div class="stat-value" id="cpu-usage">--</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">内存使用</div>
+            <div class="stat-value" id="memory-usage">--</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">插件数量</div>
+            <div class="stat-value" id="plugin-count">--</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">运行时间</div>
+            <div class="stat-value" id="uptime">--</div>
+        </div>
+    </div>
+    
+    <div class="chart-container">
+        <canvas id="cpu-chart"></canvas>
+    </div>
+    
+    <script src="plugin.js"></script>
+    <script>
+        // 显示插件信息
+        if (window.__PLUGIN_ID__) {
+            console.log('Plugin loaded:', window.__PLUGIN_ID__);
+        }
+        if (window.__CONTAINER_ID__) {
+            console.log('Container ID:', window.__CONTAINER_ID__);
+        }
+    </script>
+</body>
+</html>

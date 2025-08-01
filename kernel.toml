@@ -1,0 +1,53 @@
+# Minimal Kernel 配置文件
+# 
+# 这是一个示例配置文件，展示了所有可配置的选项
+
+[database]
+# 数据库连接 URL
+url = "sqlite:data.db"
+# 最大连接数
+max_connections = 5
+# 连接超时时间（秒）
+connect_timeout = 30
+
+[plugins]
+# 插件目录
+directory = "plugins"
+# 是否自动加载插件
+auto_load = true
+# 插件执行超时时间（毫秒）
+timeout_ms = 5000
+# 插件最大内存使用（MB）
+max_memory_mb = 128
+# 启用的插件列表（如果为空，则加载所有发现的插件）
+enabled = []
+
+[logging]
+# 日志级别: "error", "warn", "info", "debug", "trace"
+level = "info"
+# 日志格式: "compact", "full", "json"
+format = "compact"
+# 日志文件目录（如果不设置，则只输出到控制台）
+# directory = "logs"
+# 日志文件最大大小（MB）
+max_file_size_mb = 10
+# 保留的日志文件数
+max_files = 5
+
+[network]
+# 是否启用 P2P 功能
+p2p_enabled = false
+# 监听端口
+listen_port = 8080
+# 引导节点列表
+bootstrap_nodes = []
+
+[identity]
+# 是否使用系统 keyring（macOS Keychain / Windows Credential Manager / Linux Secret Service）
+use_keyring = true
+# keyring 访问超时时间（秒）- 给用户足够时间输入系统密码
+keyring_timeout_secs = 30
+# 私钥文件路径（当 use_keyring = false 时使用）
+# private_key_file = "~/.minimal-kernel/identity.key"
+# 是否允许从环境变量 MINIMAL_KERNEL_PRIVATE_KEY 加载私钥
+allow_env_key = true

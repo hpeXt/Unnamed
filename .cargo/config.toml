@@ -1,0 +1,17 @@
+# 构建配置
+[build]
+# 使用所有 CPU 核心进行并行编译
+jobs = -1
+
+# 目标配置
+[target.wasm32-unknown-unknown]
+# 插件构建优化
+rustflags = ["-C", "opt-level=z"]
+
+# 别名
+[alias]
+# 开发时的便捷命令
+w = "watch -x run"
+wr = "watch -x 'run --release'"
+wt = "watch -x test"
+wc = "watch -x check"
