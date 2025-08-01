@@ -74,38 +74,39 @@ impl LayoutManager {
         let mut tx = self.pool.begin().await?;
 
         // 插入布局
-        let layout_id = sqlx::query!(
+        let layout_id = sqlx::query(
             r#"
             INSERT INTO dashboard_layouts (name, description, grid_columns, grid_rows)
             VALUES (?1, ?2, ?3, ?4)
             "#,
-            request.name,
-            request.description,
-            grid_columns,
-            grid_rows
         )
+        .bind(request.name)
+        .bind(request.description)
+        .bind(grid_columns)
+        .bind(grid_rows)
         .execute(&mut *tx)
         .await?
         .last_insert_rowid();
 
         // 插入组件
         for widget in request.widgets {
-            sqlx::query!(
+            let config_str = widget.config.map(|c| c.to_string());
+            sqlx::query(
                 r#"
                 INSERT INTO layout_widgets 
                 (layout_id, widget_type, plugin_id, position_col, position_row, 
                  size_col_span, size_row_span, config)
                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
                 "#,
-                layout_id,
-                widget.widget_type,
-                widget.plugin_id,
-                widget.position_col,
-                widget.position_row,
-                widget.size_col_span,
-                widget.size_row_span,
-                widget.config
             )
+            .bind(layout_id)
+            .bind(widget.widget_type)
+            .bind(widget.plugin_id)
+            .bind(widget.position_col)
+            .bind(widget.position_row)
+            .bind(widget.size_col_span)
+            .bind(widget.size_row_span)
+            .bind(config_str)
             .execute(&mut *tx)
             .await?;
         }
@@ -218,17 +219,15 @@ impl LayoutManager {
         let mut tx = self.pool.begin().await?;
 
         // 先清除所有默认标记
-        sqlx::query!("UPDATE dashboard_layouts SET is_default = FALSE")
+        sqlx::query("UPDATE dashboard_layouts SET is_default = FALSE")
             .execute(&mut *tx)
             .await?;
 
         // 设置新的默认布局
-        sqlx::query!(
-            "UPDATE dashboard_layouts SET is_default = TRUE WHERE id = ?1",
-            layout_id
-        )
-        .execute(&mut *tx)
-        .await?;
+        sqlx::query("UPDATE dashboard_layouts SET is_default = TRUE WHERE id = ?1")
+            .bind(layout_id)
+            .execute(&mut *tx)
+            .await?;
 
         tx.commit().await?;
         Ok(())
@@ -236,7 +235,8 @@ impl LayoutManager {
 
     /// 删除布局
     pub async fn delete_layout(&self, layout_id: i64) -> Result<()> {
-        let result = sqlx::query!("DELETE FROM dashboard_layouts WHERE id = ?1", layout_id)
+        let result = sqlx::query("DELETE FROM dashboard_layouts WHERE id = ?1")
+            .bind(layout_id)
             .execute(&self.pool)
             .await?;
 
