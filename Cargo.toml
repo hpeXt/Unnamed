@@ -1,6 +1,6 @@
 [workspace]
 members = [".", "plugin-sdk", "plugins/storage-test", "src-tauri"]
-exclude = ["plugins/hello", "plugins/echo", "plugins/test_sender", "plugins/test_receiver", "plugins/system-stats-collector"]
+exclude = ["plugins/hello", "plugins/echo", "plugins/test_sender", "plugins/test_receiver", "plugins/system-stats-collector", "plugins/template", "plugins/test-macro"]
 
 [package]
 name = "minimal-kernel"

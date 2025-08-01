@@ -370,7 +370,7 @@ impl ContainerManager {
 
         // 先保存widget的克隆用于emit
         let widget_clone = widget.clone();
-        
+
         self.inline_widgets
             .write()
             .await

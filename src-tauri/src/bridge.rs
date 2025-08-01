@@ -1,9 +1,7 @@
 use anyhow::{anyhow, Result};
 use minimal_kernel::kernel::message::Message;
 use minimal_kernel::kernel::Kernel;
-use minimal_kernel::storage::layout::{
-    CreateWidgetRequest, LayoutManager, LayoutWidget,
-};
+use minimal_kernel::storage::layout::{CreateWidgetRequest, LayoutManager, LayoutWidget};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
@@ -368,7 +366,6 @@ impl KernelBridge {
             Err(anyhow!("Kernel not initialized"))
         }
     }
-
 
     /// 保存布局
     pub async fn save_layout(
