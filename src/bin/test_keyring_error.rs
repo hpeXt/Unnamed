@@ -12,9 +12,9 @@ async fn main() -> Result<()> {
         match IdentityManager::load_from_keyring() {
             Ok(manager) => match manager.delete_from_keyring() {
                 Ok(_) => println!("   ✓ 成功删除密钥"),
-                Err(e) => println!("   ✗ 删除失败: {}", e),
+                Err(e) => println!("   ✗ 删除失败: {e}"),
             },
-            Err(e) => println!("   ✗ 无法加载以删除: {}", e),
+            Err(e) => println!("   ✗ 无法加载以删除: {e}"),
         }
     } else {
         println!("   没有保存的密钥需要删除");
@@ -24,7 +24,7 @@ async fn main() -> Result<()> {
     println!("\n2. 尝试加载不存在的密钥:");
     match IdentityManager::load_from_keyring() {
         Ok(_) => println!("   ✗ 意外成功！不应该能加载"),
-        Err(e) => println!("   ✓ 预期的错误: {}", e),
+        Err(e) => println!("   ✓ 预期的错误: {e}"),
     }
 
     // 测试在模拟的 keyring 不可用情况下的行为

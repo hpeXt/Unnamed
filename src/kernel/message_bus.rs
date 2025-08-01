@@ -97,7 +97,7 @@ impl MessageBusHandle {
         let mut subscriptions = self.topic_subscriptions.write();
         let subscribers = subscriptions
             .entry(topic.to_string())
-            .or_insert_with(HashSet::new);
+            .or_default();
         subscribers.insert(plugin_id.to_string())
     }
 
@@ -122,7 +122,7 @@ impl MessageBusHandle {
         subscriptions
             .get(topic)
             .map(|subscribers| subscribers.iter().cloned().collect())
-            .unwrap_or_else(Vec::new)
+            .unwrap_or_default()
     }
 
     /// 发送消息到消息总线
@@ -227,7 +227,7 @@ impl MessageRouter {
         };
 
         if subscribers.is_empty() {
-            return MessageResult::PluginNotFound(format!("主题 '{}' 没有订阅者", topic));
+            return MessageResult::PluginNotFound(format!("主题 '{topic}' 没有订阅者"));
         }
 
         // 在 await 之前收集所有需要的发送器
@@ -262,7 +262,7 @@ impl MessageRouter {
         if successful_sends > 0 {
             MessageResult::Success
         } else {
-            MessageResult::Failed(format!("所有订阅者都发送失败 ({})", failed_sends))
+            MessageResult::Failed(format!("所有订阅者都发送失败 ({failed_sends})"))
         }
     }
 }

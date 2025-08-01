@@ -80,7 +80,7 @@ impl PluginManifest {
             plugin: PluginInfo {
                 name: name.to_string(),
                 version: "0.1.0".to_string(),
-                description: format!("{} 插件", name),
+                description: format!("{name} 插件"),
                 author: None,
             },
             dependencies: Dependencies::default(),
@@ -159,9 +159,9 @@ pub fn generate_example_manifest(plugin_name: &str) -> String {
         r#"# Minimal Kernel 插件清单文件
 
 [plugin]
-name = "{}"
+name = "{plugin_name}"
 version = "0.1.0"
-description = "{} 插件的简要描述"
+description = "{plugin_name} 插件的简要描述"
 author = "Your Name"
 
 [dependencies]
@@ -179,9 +179,8 @@ min_kernel_version = "0.1.0"
 # 自定义元数据字段
 [metadata.custom]
 license = "MIT"
-homepage = "https://github.com/your-username/{}"
-"#,
-        plugin_name, plugin_name, plugin_name
+homepage = "https://github.com/your-username/{plugin_name}"
+"#
     )
 }
 

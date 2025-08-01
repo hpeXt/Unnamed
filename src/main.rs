@@ -75,9 +75,9 @@ async fn handle_command(command: Commands, config: &Config) -> Result<()> {
 
             // 获取插件信息
             if let Ok(info) = kernel.call_plugin_string(&name, "info", "") {
-                println!("插件信息: {}", info);
+                println!("插件信息: {info}");
             } else {
-                println!("无法获取插件 '{}' 的信息", name);
+                println!("无法获取插件 '{name}' 的信息");
             }
         }
         Commands::ResetConfig => {

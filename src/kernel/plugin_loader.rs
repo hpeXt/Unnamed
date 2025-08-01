@@ -91,7 +91,7 @@ impl PluginInfo {
             modified,
             loaded: false,
             version: "unknown".to_string(),
-            description: format!("{} 插件", plugin_name),
+            description: format!("{plugin_name} 插件"),
             author: None,
             dependencies: Vec::new(),
             optional_dependencies: Vec::new(),
@@ -283,7 +283,7 @@ impl PluginLoader {
             .into_iter()
             .filter_map(|e| e.ok())
             .filter(|e| e.file_type().is_file())
-            .filter(|e| e.path().extension().map_or(false, |ext| ext == "wasm"))
+            .filter(|e| e.path().extension().is_some_and(|ext| ext == "wasm"))
         {
             let wasm_path = entry.path();
             let plugin_name = self.extract_plugin_name(wasm_path)?;
@@ -335,7 +335,7 @@ impl PluginLoader {
             .into_iter()
             .filter_map(|e| e.ok())
             .filter(|e| e.file_type().is_file())
-            .filter(|e| e.path().extension().map_or(false, |ext| ext == "wasm"))
+            .filter(|e| e.path().extension().is_some_and(|ext| ext == "wasm"))
         {
             let wasm_path = entry.path();
 
@@ -378,14 +378,14 @@ impl PluginLoader {
         for plugin_name in enabled_plugins {
             // 尝试多种可能的路径
             let possible_paths = vec![
-                plugin_dir.join(format!("{}.wasm", plugin_name)),
+                plugin_dir.join(format!("{plugin_name}.wasm")),
                 plugin_dir
                     .join(plugin_name)
-                    .join(format!("{}.wasm", plugin_name)),
+                    .join(format!("{plugin_name}.wasm")),
                 plugin_dir
                     .join(plugin_name)
                     .join("target/wasm32-unknown-unknown/release")
-                    .join(format!("{}.wasm", plugin_name)),
+                    .join(format!("{plugin_name}.wasm")),
             ];
 
             let mut loaded = false;
@@ -469,14 +469,14 @@ impl PluginLoader {
     fn find_plugin_path(&self, plugin_dir: &Path, plugin_name: &str) -> Result<Option<PathBuf>> {
         // 尝试多种可能的路径
         let possible_paths = vec![
-            plugin_dir.join(format!("{}.wasm", plugin_name)),
+            plugin_dir.join(format!("{plugin_name}.wasm")),
             plugin_dir
                 .join(plugin_name)
-                .join(format!("{}.wasm", plugin_name)),
+                .join(format!("{plugin_name}.wasm")),
             plugin_dir
                 .join(plugin_name)
                 .join("target/wasm32-unknown-unknown/release")
-                .join(format!("{}.wasm", plugin_name)),
+                .join(format!("{plugin_name}.wasm")),
         ];
 
         for path in possible_paths {
@@ -490,7 +490,7 @@ impl PluginLoader {
             .into_iter()
             .filter_map(|e| e.ok())
             .filter(|e| e.file_type().is_file())
-            .filter(|e| e.path().extension().map_or(false, |ext| ext == "wasm"))
+            .filter(|e| e.path().extension().is_some_and(|ext| ext == "wasm"))
         {
             let wasm_path = entry.path();
             if self.extract_plugin_name(wasm_path)? == plugin_name {

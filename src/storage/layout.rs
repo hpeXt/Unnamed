@@ -61,7 +61,7 @@ impl LayoutManager {
     /// 辅助函数：将 SQLite 的 NaiveDateTime 转换为 DateTime<Utc>
     fn naive_to_utc(naive: Option<NaiveDateTime>) -> DateTime<Utc> {
         naive.map(|dt| DateTime::from_naive_utc_and_offset(dt, Utc))
-            .unwrap_or_else(|| Utc::now())
+            .unwrap_or_else(Utc::now)
     }
 
     /// 创建新的布局

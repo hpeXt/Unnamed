@@ -116,3 +116,25 @@ anyhow = "1.0"
 default = []
 p2p = ["libp2p", "quinn"]                  # P2P 功能
 http = ["reqwest"]                          # HTTP 客户端功能
+
+# 编译优化配置
+[profile.dev]
+opt-level = 0
+debug = 1         # 减少调试信息，加快编译
+
+[profile.release]
+opt-level = 3
+lto = "thin"      # 使用thin LTO而不是fat LTO，更快
+codegen-units = 1 # 单个代码生成单元，更好的优化
+strip = true      # 移除符号，减小体积
+
+# CI专用配置：快速编译，适度优化
+[profile.ci]
+inherits = "dev"
+opt-level = 1     # 轻度优化
+debug = 0         # 无调试信息
+
+# 测试配置：快速编译，保留调试信息
+[profile.test]
+opt-level = 0
+debug = true

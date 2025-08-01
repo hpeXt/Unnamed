@@ -9,7 +9,7 @@ async fn main() -> Result<()> {
     // 测试1：检查是否有保存的密钥
     println!("\n1. 检查保存的密钥:");
     let has_key = IdentityManager::has_saved_key();
-    println!("   存在保存的密钥: {}", has_key);
+    println!("   存在保存的密钥: {has_key}");
 
     // 测试2：尝试加载密钥
     println!("\n2. 尝试加载密钥:");
@@ -23,7 +23,7 @@ async fn main() -> Result<()> {
             match manager.verify_key() {
                 Ok(true) => println!("   ✓ 密钥验证成功"),
                 Ok(false) => println!("   ✗ 密钥验证失败"),
-                Err(e) => println!("   ✗ 验证错误: {}", e),
+                Err(e) => println!("   ✗ 验证错误: {e}"),
             }
 
             // 测试4：派生插件密钥
@@ -34,11 +34,11 @@ async fn main() -> Result<()> {
                     println!("   ✓ 成功派生插件密钥");
                     println!("   插件地址: {}", plugin_key.address());
                 }
-                Err(e) => println!("   ✗ 派生失败: {}", e),
+                Err(e) => println!("   ✗ 派生失败: {e}"),
             }
         }
         Err(e) => {
-            println!("   ✗ 加载失败: {}", e);
+            println!("   ✗ 加载失败: {e}");
 
             // 测试创建新密钥
             println!("\n尝试创建新的身份管理器:");
@@ -51,10 +51,10 @@ async fn main() -> Result<()> {
                     println!("\n5. 保存密钥到 keyring:");
                     match new_manager.save_to_keyring() {
                         Ok(_) => println!("   ✓ 成功保存到 keyring"),
-                        Err(e) => println!("   ✗ 保存失败: {}", e),
+                        Err(e) => println!("   ✗ 保存失败: {e}"),
                     }
                 }
-                Err(e) => println!("   ✗ 创建失败: {}", e),
+                Err(e) => println!("   ✗ 创建失败: {e}"),
             }
         }
     }

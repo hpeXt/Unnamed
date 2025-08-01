@@ -1,0 +1,181 @@
+name: CI (Optimized)
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  SQLX_OFFLINE: true
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  RUSTUP_MAX_RETRIES: 10
+
+jobs:
+  # 快速格式检查（独立运行）
+  format-check:
+    name: Format Check
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: rustfmt
+    
+    - name: Check formatting
+      run: cargo fmt --all -- --check
+
+  # Clippy 检查（独立运行）
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: clippy
+        targets: wasm32-unknown-unknown
+    
+    - name: Cache cargo
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+          ~/.cargo/.crates.toml
+          ~/.cargo/.crates2.json
+        key: ${{ runner.os }}-cargo-clippy-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-clippy-
+          ${{ runner.os }}-cargo-
+    
+    - name: Run clippy
+      run: |
+        cargo clippy --lib --bins -- -D warnings
+        cargo clippy --all-targets --all-features
+      env:
+        DATABASE_URL: sqlite:data.db
+
+  # 主测试任务
+  test:
+    name: Test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        rust: [stable]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        toolchain: ${{ matrix.rust }}
+        targets: wasm32-unknown-unknown
+    
+    # 使用 sccache 加速编译
+    - name: Install sccache (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      env:
+        SCCACHE_VERSION: v0.7.4
+      run: |
+        SCCACHE_FILE=sccache-$SCCACHE_VERSION-x86_64-unknown-linux-musl
+        curl -L https://github.com/mozilla/sccache/releases/download/$SCCACHE_VERSION/$SCCACHE_FILE.tar.gz | tar xz
+        sudo mv $SCCACHE_FILE/sccache /usr/local/bin/sccache
+        chmod +x /usr/local/bin/sccache
+    
+    - name: Install sccache (macOS)
+      if: matrix.os == 'macos-latest'
+      run: brew install sccache
+    
+    - name: Install sccache (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        $SCCACHE_VERSION = "v0.7.4"
+        $SCCACHE_FILE = "sccache-$SCCACHE_VERSION-x86_64-pc-windows-msvc"
+        curl -L "https://github.com/mozilla/sccache/releases/download/$SCCACHE_VERSION/$SCCACHE_FILE.tar.gz" | tar xz
+        Move-Item "$SCCACHE_FILE/sccache.exe" "$env:USERPROFILE/.cargo/bin/sccache.exe"
+    
+    - name: Configure sccache
+      run: |
+        echo "SCCACHE_GHA_ENABLED=true" >> $GITHUB_ENV
+        echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
+        echo "ACTIONS_CACHE_URL=${{ env.ACTIONS_CACHE_URL }}" >> $GITHUB_ENV
+        echo "ACTIONS_RUNTIME_TOKEN=${{ env.ACTIONS_RUNTIME_TOKEN }}" >> $GITHUB_ENV
+    
+    - name: Cache cargo
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+          ~/.cargo/.crates.toml
+          ~/.cargo/.crates2.json
+        key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-test-
+          ${{ runner.os }}-cargo-
+    
+    - name: Show sccache stats
+      run: sccache --show-stats
+    
+    - name: Run tests
+      run: |
+        cargo test --all-features
+        cargo test --doc
+      env:
+        DATABASE_URL: sqlite:data.db
+    
+    - name: Build
+      run: cargo build --verbose
+      env:
+        DATABASE_URL: sqlite:data.db
+    
+    - name: Build plugins
+      run: |
+        cd plugins/hello && cargo build --target wasm32-unknown-unknown --release && cd ../..
+        cd plugins/echo && cargo build --target wasm32-unknown-unknown --release && cd ../..
+    
+    - name: Show sccache stats
+      run: sccache --show-stats
+
+  # Security Audit (允许失败)
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+    
+    - name: Cache cargo-audit
+      uses: actions/cache@v3
+      with:
+        path: ~/.cargo/bin/cargo-audit
+        key: cargo-audit-${{ runner.os }}
+    
+    - name: Install cargo-audit
+      run: |
+        if ! command -v cargo-audit &> /dev/null; then
+          curl -L https://github.com/rustsec/rustsec/releases/latest/download/cargo-audit-x86_64-unknown-linux-musl.tar.gz | tar xzf - -C $HOME/.cargo/bin
+        fi
+    
+    - name: Run security audit
+      run: cargo audit || true
