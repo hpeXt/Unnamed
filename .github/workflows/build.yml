@@ -110,7 +110,7 @@ jobs:
     
     - name: Run clippy
       run: |
-        # 检查主包，忽略插件警告
-        cargo clippy --lib --bins -- -D warnings || true
-        # 允许插件有警告
-        cargo clippy --all-targets --all-features
+        # 检查主包
+        cargo clippy --lib --bins -- -D warnings
+        # 检查所有目标（允许插件有警告）
+        cargo clippy --all-targets --all-features || true

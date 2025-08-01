@@ -95,9 +95,7 @@ impl MessageBusHandle {
     /// 订阅主题
     pub fn subscribe_topic(&self, plugin_id: &str, topic: &str) -> bool {
         let mut subscriptions = self.topic_subscriptions.write();
-        let subscribers = subscriptions
-            .entry(topic.to_string())
-            .or_default();
+        let subscribers = subscriptions.entry(topic.to_string()).or_default();
         subscribers.insert(plugin_id.to_string())
     }
 

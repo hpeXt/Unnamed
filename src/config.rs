@@ -175,7 +175,6 @@ pub struct IdentityConfig {
     pub allow_env_key: bool,
 }
 
-
 impl Default for DatabaseConfig {
     fn default() -> Self {
         Self {

@@ -60,7 +60,8 @@ impl LayoutManager {
 
     /// 辅助函数：将 SQLite 的 NaiveDateTime 转换为 DateTime<Utc>
     fn naive_to_utc(naive: Option<NaiveDateTime>) -> DateTime<Utc> {
-        naive.map(|dt| DateTime::from_naive_utc_and_offset(dt, Utc))
+        naive
+            .map(|dt| DateTime::from_naive_utc_and_offset(dt, Utc))
             .unwrap_or_else(Utc::now)
     }
 
@@ -162,8 +163,7 @@ impl LayoutManager {
             .into_iter()
             .map(|row| {
                 let config_str: Option<String> = row.get("config");
-                let config = config_str
-                    .and_then(|s| serde_json::from_str(&s).ok());
+                let config = config_str.and_then(|s| serde_json::from_str(&s).ok());
 
                 LayoutWidget {
                     id: row.get("id"),
@@ -191,7 +191,7 @@ impl LayoutManager {
                    is_default, created_at, updated_at
             FROM dashboard_layouts
             ORDER BY is_default DESC, created_at DESC
-            "#
+            "#,
         )
         .fetch_all(&self.pool)
         .await?;
@@ -273,7 +273,7 @@ impl LayoutManager {
             FROM dashboard_layouts
             WHERE is_default = TRUE
             LIMIT 1
-            "#
+            "#,
         )
         .fetch_optional(&self.pool)
         .await?;
