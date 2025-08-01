@@ -1,3 +1,4 @@
 {
-  "db": "SQLite"
+  "db": "SQLite",
+  "offline": true
 }

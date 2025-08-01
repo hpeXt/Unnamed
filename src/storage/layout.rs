@@ -8,8 +8,8 @@ pub struct DashboardLayout {
     pub id: i64,
     pub name: String,
     pub description: Option<String>,
-    pub grid_columns: i32,
-    pub grid_rows: i32,
+    pub grid_columns: i64,
+    pub grid_rows: i64,
     pub is_default: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -21,10 +21,10 @@ pub struct LayoutWidget {
     pub layout_id: i64,
     pub widget_type: String,
     pub plugin_id: Option<String>,
-    pub position_col: i32,
-    pub position_row: i32,
-    pub size_col_span: i32,
-    pub size_row_span: i32,
+    pub position_col: i64,
+    pub position_row: i64,
+    pub size_col_span: i64,
+    pub size_row_span: i64,
     pub config: Option<serde_json::Value>,
     pub created_at: DateTime<Utc>,
 }
@@ -33,8 +33,8 @@ pub struct LayoutWidget {
 pub struct CreateLayoutRequest {
     pub name: String,
     pub description: Option<String>,
-    pub grid_columns: Option<i32>,
-    pub grid_rows: Option<i32>,
+    pub grid_columns: Option<i64>,
+    pub grid_rows: Option<i64>,
     pub widgets: Vec<CreateWidgetRequest>,
 }
 
@@ -42,10 +42,10 @@ pub struct CreateLayoutRequest {
 pub struct CreateWidgetRequest {
     pub widget_type: String,
     pub plugin_id: Option<String>,
-    pub position_col: i32,
-    pub position_row: i32,
-    pub size_col_span: i32,
-    pub size_row_span: i32,
+    pub position_col: i64,
+    pub position_row: i64,
+    pub size_col_span: i64,
+    pub size_row_span: i64,
     pub config: Option<serde_json::Value>,
 }
 
@@ -115,7 +115,7 @@ impl LayoutManager {
         let layout = sqlx::query_as!(
             DashboardLayout,
             r#"
-            SELECT id, name, description, grid_columns, grid_rows, 
+            SELECT id, name, description, grid_columns, grid_rows,
                    is_default, created_at, updated_at
             FROM dashboard_layouts
             WHERE id = ?1
@@ -153,7 +153,7 @@ impl LayoutManager {
         let layouts = sqlx::query_as!(
             DashboardLayout,
             r#"
-            SELECT id, name, description, grid_columns, grid_rows, 
+            SELECT id, name, description, grid_columns, grid_rows,
                    is_default, created_at, updated_at
             FROM dashboard_layouts
             ORDER BY is_default DESC, created_at DESC
@@ -221,7 +221,7 @@ impl LayoutManager {
         let layout = sqlx::query_as!(
             DashboardLayout,
             r#"
-            SELECT id, name, description, grid_columns, grid_rows, 
+            SELECT id, name, description, grid_columns, grid_rows,
                    is_default, created_at, updated_at
             FROM dashboard_layouts
             WHERE is_default = TRUE
