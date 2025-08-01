@@ -2,7 +2,7 @@
 name = "plugin-sdk"
 version = "0.1.0"
 edition = "2021"
-authors = ["Long-life Geek"]
+authors = ["hpeXt"]
 description = "最小化内核插件 SDK"
 license = "MIT"
 

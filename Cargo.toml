@@ -6,10 +6,10 @@ exclude = ["plugins/hello", "plugins/echo", "plugins/test_sender", "plugins/test
 name = "minimal-kernel"
 version = "0.1.0"
 edition = "2021"
-authors = ["Long-life Geek"]
-description = "最小化内核 - 长寿极客的数字孪生平台"
+authors = ["hpeXt"]
+description = "最小化内核 - 基于插件架构的本地数据处理平台"
 license = "MIT"
-repository = "https://github.com/long-life-geek/minimal-kernel"
+repository = "https://github.com/hpeXt/Unnamed"
 keywords = ["kernel", "plugin-system", "digital-twin", "local-first"]
 categories = ["development-tools"]
 

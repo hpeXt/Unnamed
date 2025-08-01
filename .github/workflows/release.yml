@@ -37,11 +37,11 @@ jobs:
           - **Linux**: `minimal-kernel-dashboard_${{ github.ref_name }}_amd64.deb`
           
           ### 📝 更新内容
-          请查看 [CHANGELOG](https://github.com/hpeXt/minimal-kernel/blob/main/CHANGELOG.md) 了解详细更新内容。
+          请查看 [CHANGELOG](https://github.com/hpeXt/Unnamed/blob/main/CHANGELOG.md) 了解详细更新内容。
           
           ### 🚀 快速开始
           1. 下载对应平台的安装包
-          2. 按照 [安装指南](https://github.com/hpeXt/minimal-kernel/blob/main/INSTALL.md) 进行安装
+          2. 按照 [安装指南](https://github.com/hpeXt/Unnamed/blob/main/INSTALL.md) 进行安装
           3. 启动应用，开始使用！
 
   build-tauri:
@@ -93,8 +93,8 @@ jobs:
     
     - name: Build plugins
       run: |
-        chmod +x build-plugins.sh
-        ./build-plugins.sh
+        cd plugins/hello && cargo build --target wasm32-unknown-unknown --release && cd ../..
+        cd plugins/echo && cargo build --target wasm32-unknown-unknown --release && cd ../..
     
     - name: Build Tauri App
       uses: tauri-apps/tauri-action@v0

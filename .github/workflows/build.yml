@@ -62,8 +62,8 @@ jobs:
     
     - name: Build plugins
       run: |
-        chmod +x build-plugins.sh
-        ./build-plugins.sh
+        cd plugins/hello && cargo build --target wasm32-unknown-unknown --release && cd ../..
+        cd plugins/echo && cargo build --target wasm32-unknown-unknown --release && cd ../..
     
     - name: Build Tauri App
       uses: tauri-apps/tauri-action@v0
@@ -73,7 +73,7 @@ jobs:
         tagName: ${{ github.ref_name }}
         releaseName: 'Minimal Kernel v__VERSION__'
         releaseBody: |
-          See the [CHANGELOG](https://github.com/hpeXt/minimal-kernel/blob/main/CHANGELOG.md) for details.
+          See the [CHANGELOG](https://github.com/hpeXt/Unnamed/blob/main/CHANGELOG.md) for details.
           
           ## 下载
           - **macOS**: 下载 `.dmg` 文件

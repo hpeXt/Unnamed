@@ -2,7 +2,7 @@
 name = "cs-dashboard"
 version = "0.1.0"
 description = "Minimal Kernel Dashboard - 插件驱动的仪表板"
-authors = ["Minimal Kernel Team"]
+authors = ["hpeXt"]
 edition = "2021"
 
 [build-dependencies]

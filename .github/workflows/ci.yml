@@ -56,8 +56,8 @@ jobs:
     
     - name: Build plugins
       run: |
-        chmod +x build-plugins.sh || true
-        ./build-plugins.sh || true
+        cd plugins/hello && cargo build --target wasm32-unknown-unknown --release && cd ../..
+        cd plugins/echo && cargo build --target wasm32-unknown-unknown --release && cd ../..
 
   security-audit:
     name: Security Audit
