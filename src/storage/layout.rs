@@ -1,7 +1,7 @@
-use anyhow::{Result, anyhow};
-use serde::{Serialize, Deserialize};
-use sqlx::{SqlitePool, FromRow};
+use anyhow::{anyhow, Result};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use sqlx::{FromRow, SqlitePool};
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct DashboardLayout {
@@ -188,12 +188,9 @@ impl LayoutManager {
 
     /// 删除布局
     pub async fn delete_layout(&self, layout_id: i64) -> Result<()> {
-        let result = sqlx::query!(
-            "DELETE FROM dashboard_layouts WHERE id = ?1",
-            layout_id
-        )
-        .execute(&self.pool)
-        .await?;
+        let result = sqlx::query!("DELETE FROM dashboard_layouts WHERE id = ?1", layout_id)
+            .execute(&self.pool)
+            .await?;
 
         if result.rows_affected() == 0 {
             return Err(anyhow!("Layout not found"));

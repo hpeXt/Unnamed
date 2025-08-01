@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use tokio::sync::RwLock;
-use tauri::{AppHandle, Emitter};
 use sysinfo::System;
+use tauri::{AppHandle, Emitter};
+use tokio::sync::RwLock;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SystemStats {
@@ -48,9 +48,7 @@ impl SystemMonitor {
         // CPU 使用率（简化实现，使用平均值）
         let cpu_count = system.cpus().len() as f32;
         let cpu_usage = if cpu_count > 0.0 {
-            system.cpus().iter()
-                .map(|cpu| cpu.cpu_usage())
-                .sum::<f32>() / cpu_count
+            system.cpus().iter().map(|cpu| cpu.cpu_usage()).sum::<f32>() / cpu_count
         } else {
             0.0
         };
@@ -66,7 +64,7 @@ impl SystemMonitor {
 
         // 磁盘信息 (暂时使用固定值，sysinfo 0.30 API 不同)
         let disk_total = 1_000_000_000_000u64; // 1TB
-        let disk_used = 500_000_000_000u64;    // 500GB
+        let disk_used = 500_000_000_000u64; // 500GB
         let disk_usage = 50.0;
 
         // 进程数量
@@ -111,7 +109,7 @@ impl SystemMonitor {
 
         // 按内存使用量排序
         processes.sort_by(|a, b| b.memory_usage.cmp(&a.memory_usage));
-        
+
         // 只返回前 20 个进程
         processes.truncate(20);
 
@@ -122,10 +120,11 @@ impl SystemMonitor {
     pub async fn start_monitoring(self: Arc<Self>, interval_ms: u64) {
         let monitor = self.clone();
         tokio::spawn(async move {
-            let mut interval = tokio::time::interval(tokio::time::Duration::from_millis(interval_ms));
+            let mut interval =
+                tokio::time::interval(tokio::time::Duration::from_millis(interval_ms));
             loop {
                 interval.tick().await;
-                
+
                 match monitor.get_system_stats().await {
                     Ok(stats) => {
                         // 发送系统统计信息到前端

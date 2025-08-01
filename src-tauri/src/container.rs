@@ -1,11 +1,11 @@
-use std::collections::HashMap;
-use uuid::Uuid;
-use anyhow::{Result, anyhow};
-use serde::{Serialize, Deserialize};
-use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindowBuilder};
-use std::sync::Arc;
-use tokio::sync::RwLock;
+use anyhow::{anyhow, Result};
+use serde::{Deserialize, Serialize};
 use serde_json;
+use std::collections::HashMap;
+use std::sync::Arc;
+use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindowBuilder};
+use tokio::sync::RwLock;
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginContainer {
@@ -22,7 +22,7 @@ pub struct PluginContainer {
 #[serde(rename_all = "lowercase")]
 pub enum RenderMode {
     WebView,
-    Inline,     // 新增：主窗口内组件
+    Inline, // 新增：主窗口内组件
     Canvas,
     Native,
 }
@@ -76,7 +76,7 @@ pub enum ContainerStatus {
 
 pub struct ContainerManager {
     containers: Arc<RwLock<HashMap<String, PluginContainer>>>,
-    inline_widgets: Arc<RwLock<HashMap<String, InlineWidget>>>,  // 新增：内联组件管理
+    inline_widgets: Arc<RwLock<HashMap<String, InlineWidget>>>, // 新增：内联组件管理
     app_handle: Arc<RwLock<Option<AppHandle>>>,
 }
 
@@ -88,7 +88,7 @@ impl ContainerManager {
             app_handle: Arc::new(RwLock::new(None)),
         }
     }
-    
+
     pub async fn set_app_handle(&self, app_handle: AppHandle) {
         let mut handle = self.app_handle.write().await;
         *handle = Some(app_handle);
@@ -102,10 +102,13 @@ impl ContainerManager {
         size: Option<ContainerSize>,
     ) -> Result<String> {
         let container_id = Uuid::new_v4().to_string();
-        
+
         let position = position.unwrap_or(ContainerPosition { x: 100.0, y: 100.0 });
-        let size = size.unwrap_or(ContainerSize { width: 400.0, height: 300.0 });
-        
+        let size = size.unwrap_or(ContainerSize {
+            width: 400.0,
+            height: 300.0,
+        });
+
         let mut container = PluginContainer {
             id: container_id.clone(),
             plugin_id: plugin_id.to_string(),
@@ -120,7 +123,7 @@ impl ContainerManager {
             RenderMode::WebView => {
                 let webview_label = format!("plugin-{}-{}", plugin_id, &container_id[..8]);
                 tracing::info!("Creating WebView window with label: {}", webview_label);
-                
+
                 // 创建实际的 WebView 窗口
                 let app_handle_guard = self.app_handle.read().await;
                 if let Some(app_handle) = app_handle_guard.as_ref() {
@@ -131,8 +134,9 @@ impl ContainerManager {
                         plugin_id,
                         position,
                         size,
-                    ).await?;
-                    
+                    )
+                    .await?;
+
                     container.webview_label = Some(webview_label);
                     container.status = ContainerStatus::Active;
                 } else {
@@ -154,7 +158,10 @@ impl ContainerManager {
             }
         }
 
-        self.containers.write().await.insert(container_id.clone(), container);
+        self.containers
+            .write()
+            .await
+            .insert(container_id.clone(), container);
         Ok(container_id)
     }
 
@@ -168,22 +175,23 @@ impl ContainerManager {
     ) -> Result<()> {
         // 获取插件的 HTML 路径
         let plugin_url = self.get_plugin_url(plugin_id)?;
-        tracing::info!("Creating WebView window for plugin {} with URL: {}", plugin_id, plugin_url);
-        
+        tracing::info!(
+            "Creating WebView window for plugin {} with URL: {}",
+            plugin_id,
+            plugin_url
+        );
+
         // 创建新的 WebView 窗口
-        let window = WebviewWindowBuilder::new(
-            app_handle,
-            label,
-            WebviewUrl::App(plugin_url.into()),
-        )
-        .title(format!("Plugin: {}", plugin_id))
-        .position(position.x, position.y)
-        .inner_size(size.width, size.height)
-        .resizable(true)
-        .decorations(true)
-        .always_on_top(false)
-        .build()?;
-        
+        let window =
+            WebviewWindowBuilder::new(app_handle, label, WebviewUrl::App(plugin_url.into()))
+                .title(format!("Plugin: {}", plugin_id))
+                .position(position.x, position.y)
+                .inner_size(size.width, size.height)
+                .resizable(true)
+                .decorations(true)
+                .always_on_top(false)
+                .build()?;
+
         // 注入插件 API 和 Tauri API
         window.eval(&format!(
             r#"
@@ -245,10 +253,10 @@ impl ContainerManager {
             "#,
             plugin_id, label, plugin_id, label, plugin_id, plugin_id, plugin_id, plugin_id
         ))?;
-        
+
         Ok(())
     }
-    
+
     fn get_plugin_url(&self, plugin_id: &str) -> Result<String> {
         // 对于开发模式，使用本地文件路径
         // 对于生产模式，应该使用打包的资源路径
@@ -262,7 +270,7 @@ impl ContainerManager {
                 .join("plugins")
                 .join(format!("ui-{}", plugin_id))
                 .join("index.html");
-            
+
             if plugin_path.exists() {
                 Ok(format!("file://{}", plugin_path.to_string_lossy()))
             } else {
@@ -273,15 +281,19 @@ impl ContainerManager {
             Ok(format!("../plugins/ui-{}/index.html", plugin_id))
         }
     }
-    
+
     pub async fn get_container(&self, container_id: &str) -> Option<PluginContainer> {
         self.containers.read().await.get(container_id).cloned()
     }
 
     pub async fn remove_container(&self, container_id: &str) -> Result<()> {
-        let container = self.containers.write().await.remove(container_id)
+        let container = self
+            .containers
+            .write()
+            .await
+            .remove(container_id)
             .ok_or_else(|| anyhow!("Container not found: {}", container_id))?;
-        
+
         // 如果是 WebView，关闭窗口
         if let Some(webview_label) = container.webview_label {
             let app_handle_guard = self.app_handle.read().await;
@@ -291,29 +303,35 @@ impl ContainerManager {
                 }
             }
         }
-        
+
         Ok(())
     }
 
     pub async fn list_containers(&self) -> Vec<PluginContainer> {
         self.containers.read().await.values().cloned().collect()
     }
-    
-    pub async fn update_container_status(&self, container_id: &str, status: ContainerStatus) -> Result<()> {
+
+    pub async fn update_container_status(
+        &self,
+        container_id: &str,
+        status: ContainerStatus,
+    ) -> Result<()> {
         let mut containers = self.containers.write().await;
-        let container = containers.get_mut(container_id)
+        let container = containers
+            .get_mut(container_id)
             .ok_or_else(|| anyhow!("Container not found: {}", container_id))?;
         container.status = status;
         Ok(())
     }
-    
+
     pub async fn resize_container(&self, container_id: &str, size: ContainerSize) -> Result<()> {
         let mut containers = self.containers.write().await;
-        let container = containers.get_mut(container_id)
+        let container = containers
+            .get_mut(container_id)
             .ok_or_else(|| anyhow!("Container not found: {}", container_id))?;
-        
+
         container.size = size.clone();
-        
+
         // 如果是 WebView，调整窗口大小
         if let Some(webview_label) = &container.webview_label {
             let app_handle_guard = self.app_handle.read().await;
@@ -326,10 +344,10 @@ impl ContainerManager {
                 }
             }
         }
-        
+
         Ok(())
     }
-    
+
     // 新增：创建内联组件
     pub async fn create_inline_widget(
         &self,
@@ -339,7 +357,7 @@ impl ContainerManager {
         config: serde_json::Value,
     ) -> Result<String> {
         let widget_id = Uuid::new_v4().to_string();
-        
+
         let widget = InlineWidget {
             id: widget_id.clone(),
             plugin_id: format!("widget-{}", widget_type),
@@ -349,51 +367,65 @@ impl ContainerManager {
             config,
             status: ContainerStatus::Active,
         };
-        
-        self.inline_widgets.write().await.insert(widget_id.clone(), widget);
-        
+
+        self.inline_widgets
+            .write()
+            .await
+            .insert(widget_id.clone(), widget);
+
         // 通知前端创建组件
         if let Some(app_handle) = self.app_handle.read().await.as_ref() {
             app_handle.emit("create-inline-widget", &widget)?;
         }
-        
+
         Ok(widget_id)
     }
-    
+
     // 新增：删除内联组件
     pub async fn remove_inline_widget(&self, widget_id: &str) -> Result<()> {
-        self.inline_widgets.write().await.remove(widget_id)
+        self.inline_widgets
+            .write()
+            .await
+            .remove(widget_id)
             .ok_or_else(|| anyhow!("Widget not found: {}", widget_id))?;
-        
+
         // 通知前端删除组件
         if let Some(app_handle) = self.app_handle.read().await.as_ref() {
             app_handle.emit("remove-inline-widget", &widget_id)?;
         }
-        
+
         Ok(())
     }
-    
+
     // 新增：获取所有内联组件
     pub async fn list_inline_widgets(&self) -> Vec<InlineWidget> {
         self.inline_widgets.read().await.values().cloned().collect()
     }
-    
+
     // 新增：更新内联组件配置
-    pub async fn update_inline_widget(&self, widget_id: &str, config: serde_json::Value) -> Result<()> {
+    pub async fn update_inline_widget(
+        &self,
+        widget_id: &str,
+        config: serde_json::Value,
+    ) -> Result<()> {
         let mut widgets = self.inline_widgets.write().await;
-        let widget = widgets.get_mut(widget_id)
+        let widget = widgets
+            .get_mut(widget_id)
             .ok_or_else(|| anyhow!("Widget not found: {}", widget_id))?;
-        
+
         widget.config = config.clone();
-        
+
         // 通知前端更新组件
         if let Some(app_handle) = self.app_handle.read().await.as_ref() {
-            app_handle.emit("update-inline-widget", &serde_json::json!({
-                "id": widget_id,
-                "config": config
-            }))?;
+            app_handle.emit(
+                "update-inline-widget",
+                &serde_json::json!({
+                    "id": widget_id,
+                    "config": config
+                }),
+            )?;
         }
-        
+
         Ok(())
     }
 }

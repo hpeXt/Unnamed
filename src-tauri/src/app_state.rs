@@ -14,13 +14,13 @@ impl AppState {
             ready: Arc::new(AtomicBool::new(false)),
         }
     }
-    
+
     /// 标记应用已就绪
     pub fn set_ready(&self) {
         self.ready.store(true, Ordering::Relaxed);
         tracing::info!("Application is now ready");
     }
-    
+
     /// 检查应用是否已就绪
     pub fn is_ready(&self) -> bool {
         self.ready.load(Ordering::Relaxed)

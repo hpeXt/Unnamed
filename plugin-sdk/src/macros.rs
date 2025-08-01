@@ -10,11 +10,11 @@ macro_rules! plugin_main {
         use $crate::error::PluginResult;
         use extism_pdk::*;
         use std::sync::Mutex;
-        
+
         // 全局插件实例
-        static PLUGIN_INSTANCE: std::sync::LazyLock<Mutex<Option<$plugin_type>>> = 
+        static PLUGIN_INSTANCE: std::sync::LazyLock<Mutex<Option<$plugin_type>>> =
             std::sync::LazyLock::new(|| Mutex::new(None));
-        
+
         /// 初始化插件
         #[plugin_fn]
         pub fn initialize(config_json: String) -> FnResult<String> {
@@ -24,7 +24,7 @@ macro_rules! plugin_main {
                 serde_json::from_str(&config_json)
                     .map_err(|e| extism_pdk::Error::msg(format!("Failed to parse config: {}", e)))?
             };
-            
+
             let mut instance = <$plugin_type>::default();
             match instance.initialize(config) {
                 Ok(_) => {
@@ -38,13 +38,13 @@ macro_rules! plugin_main {
                 Err(e) => Err(extism_pdk::Error::msg(format!("Failed to initialize plugin: {}", e))),
             }
         }
-        
+
         /// 处理消息
         #[plugin_fn]
         pub fn handle_message(message_json: String) -> FnResult<String> {
             let message: $crate::message::PluginMessage = serde_json::from_str(&message_json)
                 .map_err(|e| extism_pdk::Error::msg(format!("Failed to parse message: {}", e)))?;
-            
+
             let mut guard = PLUGIN_INSTANCE.lock().unwrap();
             if let Some(ref mut plugin) = guard.as_mut() {
                 match plugin.handle_message(message) {
@@ -55,7 +55,7 @@ macro_rules! plugin_main {
                 Err(extism_pdk::Error::msg("Plugin not initialized"))
             }
         }
-        
+
         /// 插件定时任务
         #[plugin_fn]
         pub fn tick() -> FnResult<String> {
@@ -69,7 +69,7 @@ macro_rules! plugin_main {
                 Err(extism_pdk::Error::msg("Plugin not initialized"))
             }
         }
-        
+
         /// 获取插件元数据
         #[plugin_fn]
         pub fn metadata() -> FnResult<String> {
@@ -84,7 +84,7 @@ macro_rules! plugin_main {
                     .map_err(|e| extism_pdk::Error::msg(format!("Failed to serialize metadata: {}", e)))?)
             }
         }
-        
+
         /// 获取插件状态
         #[plugin_fn]
         pub fn status() -> FnResult<String> {
@@ -100,7 +100,7 @@ macro_rules! plugin_main {
                 }).to_string())
             }
         }
-        
+
         /// 健康检查
         #[plugin_fn]
         pub fn health_check() -> FnResult<String> {
@@ -123,7 +123,7 @@ macro_rules! plugin_main {
                 }).to_string())
             }
         }
-        
+
         /// 关闭插件
         #[plugin_fn]
         pub fn shutdown() -> FnResult<String> {
@@ -165,10 +165,10 @@ macro_rules! plugin_json_handler {
         pub fn $fn_name(input: String) -> FnResult<String> {
             let parsed_input: $input_type = serde_json::from_str(&input)
                 .map_err(|e| extism_pdk::Error::msg(format!("Failed to parse input: {}", e)))?;
-            
+
             let result: $output_type = $handler(parsed_input)
                 .map_err(|e| extism_pdk::Error::msg(format!("Handler error: {}", e)))?;
-            
+
             serde_json::to_string(&result)
                 .map_err(|e| extism_pdk::Error::msg(format!("Failed to serialize result: {}", e)))
         }
@@ -191,7 +191,7 @@ macro_rules! plugin_info {
                 Self::new()
             }
         }
-        
+
         impl $crate::plugin::Plugin for Self {
             fn metadata(&self) -> $crate::plugin::PluginMetadata {
                 $crate::plugin::PluginMetadata {
@@ -204,17 +204,17 @@ macro_rules! plugin_info {
                     config_schema: None,
                 }
             }
-            
+
             fn status(&self) -> $crate::plugin::PluginStatus {
                 self.status
             }
-            
+
             fn initialize(&mut self, config: $crate::plugin::PluginConfig) -> $crate::error::PluginResult<()> {
                 self.config = Some(config);
                 self.status = $crate::plugin::PluginStatus::Running;
                 Ok(())
             }
-            
+
             fn handle_event(&mut self, event: $crate::plugin::PluginEvent) -> $crate::error::PluginResult<()> {
                 match event {
                     $crate::plugin::PluginEvent::Message(msg) => self.handle_message(msg),
@@ -225,24 +225,24 @@ macro_rules! plugin_info {
                     _ => Ok(()),
                 }
             }
-            
+
             fn get_config(&self) -> Option<&$crate::plugin::PluginConfig> {
                 self.config.as_ref()
             }
-            
+
             fn shutdown(&mut self) -> $crate::error::PluginResult<()> {
                 self.status = $crate::plugin::PluginStatus::Shutdown;
                 Ok(())
             }
         }
     };
-    
+
     (@author) => { None };
     (@author $author:expr) => { Some($author.to_string()) };
-    
+
     (@dependencies) => { Vec::new() };
     (@dependencies $($dep:expr),*) => { vec![$($dep.to_string()),*] };
-    
+
     (@tags) => { Vec::new() };
     (@tags $($tag:expr),*) => { vec![$($tag.to_string()),*] };
 }
@@ -302,15 +302,13 @@ macro_rules! debug_log {
 /// 定义计时宏
 #[macro_export]
 macro_rules! time_it {
-    ($name:expr, $block:block) => {
-        {
-            let start = std::time::Instant::now();
-            let result = $block;
-            let elapsed = start.elapsed();
-            $crate::log_debug!("{} took {:?}", $name, elapsed);
-            result
-        }
-    };
+    ($name:expr, $block:block) => {{
+        let start = std::time::Instant::now();
+        let result = $block;
+        let elapsed = start.elapsed();
+        $crate::log_debug!("{} took {:?}", $name, elapsed);
+        result
+    }};
 }
 
 /// 插件测试宏
@@ -324,7 +322,7 @@ macro_rules! plugin_test {
             let mut plugin = <$plugin_type>::default();
             let config = $crate::plugin::PluginConfig::default();
             plugin.initialize(config).unwrap();
-            
+
             $test_body
         }
     };
@@ -333,7 +331,7 @@ macro_rules! plugin_test {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     // 这些宏需要在实际插件中测试，这里只是确保它们能编译
     #[test]
     fn test_macros_compile() {

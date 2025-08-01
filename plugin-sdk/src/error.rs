@@ -10,66 +10,63 @@ pub enum PluginError {
     /// 序列化错误
     #[error("Serialization error: {0}")]
     Serialization(#[from] serde_json::Error),
-    
+
     /// 主机函数调用错误
     #[error("Host function error: {0}")]
     HostFunction(String),
-    
+
     /// 初始化错误
     #[error("Initialization error: {0}")]
     Initialization(String),
-    
+
     /// 配置错误
     #[error("Configuration error: {0}")]
     Configuration(String),
-    
+
     /// 消息处理错误
     #[error("Message processing error: {0}")]
     MessageProcessing(String),
-    
+
     /// 存储错误
     #[error("Storage error: {0}")]
     Storage(String),
-    
+
     /// 网络错误
     #[error("Network error: {0}")]
     Network(String),
-    
+
     /// 权限错误
     #[error("Permission error: {0}")]
     Permission(String),
-    
+
     /// 资源不足错误
     #[error("Resource exhausted: {0}")]
     ResourceExhausted(String),
-    
+
     /// 超时错误
     #[error("Timeout error: {0}")]
     Timeout(String),
-    
+
     /// 依赖错误
     #[error("Dependency error: {0}")]
     Dependency(String),
-    
+
     /// 插件已关闭
     #[error("Plugin is shutdown")]
     PluginShutdown,
-    
+
     /// 插件状态错误
     #[error("Invalid plugin state: expected {expected}, got {actual}")]
-    InvalidState {
-        expected: String,
-        actual: String,
-    },
-    
+    InvalidState { expected: String, actual: String },
+
     /// 不支持的操作
     #[error("Unsupported operation: {0}")]
     UnsupportedOperation(String),
-    
+
     /// 通用错误
     #[error("Generic error: {0}")]
     Generic(String),
-    
+
     /// 包装其他错误
     #[error("External error: {0}")]
     External(#[from] anyhow::Error),
@@ -101,7 +98,7 @@ impl ErrorContext {
             context: std::collections::HashMap::new(),
         }
     }
-    
+
     /// 添加上下文信息
     pub fn with_context(mut self, key: &str, value: &str) -> Self {
         self.context.insert(key.to_string(), value.to_string());
@@ -113,7 +110,7 @@ impl ErrorContext {
 pub trait PluginErrorExt<T> {
     /// 添加错误上下文
     fn with_context(self, context: ErrorContext) -> PluginResult<T>;
-    
+
     /// 添加简单上下文
     fn with_plugin_context(self, plugin_name: &str, operation: &str) -> PluginResult<T>;
 }
@@ -127,7 +124,7 @@ impl<T> PluginErrorExt<T> for PluginResult<T> {
             ))
         })
     }
-    
+
     fn with_plugin_context(self, plugin_name: &str, operation: &str) -> PluginResult<T> {
         let context = ErrorContext::new(plugin_name, operation);
         self.with_context(context)
@@ -165,26 +162,31 @@ impl From<std::string::FromUtf8Error> for PluginError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_plugin_error_creation() {
         let error = plugin_error!(Configuration, "Invalid config");
         assert!(matches!(error, PluginError::Configuration(_)));
     }
-    
+
     #[test]
     fn test_plugin_error_formatting() {
         let error = plugin_error!(MessageProcessing, "Failed to process message: {}", "test");
-        assert!(error.to_string().contains("Failed to process message: test"));
+        assert!(error
+            .to_string()
+            .contains("Failed to process message: test"));
     }
-    
+
     #[test]
     fn test_error_context() {
-        let context = ErrorContext::new("test_plugin", "initialize")
-            .with_context("config", "test_config");
-        
+        let context =
+            ErrorContext::new("test_plugin", "initialize").with_context("config", "test_config");
+
         assert_eq!(context.plugin_name, "test_plugin");
         assert_eq!(context.operation, "initialize");
-        assert_eq!(context.context.get("config"), Some(&"test_config".to_string()));
+        assert_eq!(
+            context.context.get("config"),
+            Some(&"test_config".to_string())
+        );
     }
 }

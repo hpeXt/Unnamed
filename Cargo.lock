@@ -2255,6 +2255,8 @@ dependencies = [
  "anyhow",
  "chrono",
  "minimal-kernel",
+ "notify",
+ "once_cell",
  "parking_lot",
  "serde",
  "serde_json",

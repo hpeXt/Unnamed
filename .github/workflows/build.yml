@@ -60,10 +60,17 @@ jobs:
           libayatana-appindicator3-dev \
           librsvg2-dev
     
+    - name: Initialize database
+      run: |
+        cargo install sqlx-cli --no-default-features --features sqlite
+        sqlx database create
+        sqlx migrate run
+      env:
+        DATABASE_URL: sqlite:data.db
+    
     - name: Build plugins
       run: |
-        cd plugins/hello && cargo build --target wasm32-unknown-unknown --release && cd ../..
-        cd plugins/echo && cargo build --target wasm32-unknown-unknown --release && cd ../..
+        ./build-plugins.sh || true
     
     - name: Build Tauri App
       uses: tauri-apps/tauri-action@v0
@@ -97,10 +104,20 @@ jobs:
     - name: Rust cache
       uses: swatinem/rust-cache@v2
     
+    - name: Initialize database for tests
+      run: |
+        cargo install sqlx-cli --no-default-features --features sqlite
+        sqlx database create
+        sqlx migrate run
+      env:
+        DATABASE_URL: sqlite:data.db
+    
     - name: Run tests
       run: |
         cargo test --all-features
         cargo test --doc
+      env:
+        DATABASE_URL: sqlite:data.db
     
     - name: Check formatting
       run: cargo fmt -- --check

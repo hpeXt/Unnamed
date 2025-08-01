@@ -74,6 +74,17 @@ body {
     border-color: var(--accent-primary);
 }
 
+#debug-console {
+    background-color: var(--bg-surface);
+    color: var(--accent-warning);
+    border-color: var(--accent-warning);
+}
+
+#debug-console:hover {
+    background-color: var(--accent-warning);
+    color: var(--bg-primary);
+}
+
 /* 主内容区 */
 #dashboard-container {
     flex: 1;

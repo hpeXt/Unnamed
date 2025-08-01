@@ -1,7 +1,7 @@
+use anyhow::{Context, Result};
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
-use serde::{Deserialize, Serialize};
-use anyhow::{Result, Context};
 
 #[derive(Debug, Deserialize)]
 pub struct PluginConfig {
@@ -26,7 +26,11 @@ pub struct CreatePluginResult {
 
 pub async fn create_plugin_from_template(config: PluginConfig) -> Result<CreatePluginResult> {
     // 验证插件名称格式
-    if !config.name.chars().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-') {
+    if !config
+        .name
+        .chars()
+        .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-')
+    {
         return Ok(CreatePluginResult {
             success: false,
             path: String::new(),
@@ -43,7 +47,7 @@ pub async fn create_plugin_from_template(config: PluginConfig) -> Result<CreateP
 
     // 创建插件目录
     let plugin_dir = project_root.join("plugins").join(&config.name);
-    
+
     // 检查插件是否已存在
     if plugin_dir.exists() {
         return Ok(CreatePluginResult {
@@ -54,23 +58,19 @@ pub async fn create_plugin_from_template(config: PluginConfig) -> Result<CreateP
     }
 
     // 创建目录结构
-    fs::create_dir_all(plugin_dir.join("src"))
-        .context("创建插件目录失败")?;
+    fs::create_dir_all(plugin_dir.join("src")).context("创建插件目录失败")?;
 
     // 生成 Cargo.toml
     let cargo_toml = generate_cargo_toml(&config);
-    fs::write(plugin_dir.join("Cargo.toml"), cargo_toml)
-        .context("写入 Cargo.toml 失败")?;
+    fs::write(plugin_dir.join("Cargo.toml"), cargo_toml).context("写入 Cargo.toml 失败")?;
 
     // 生成 src/lib.rs
     let lib_rs = generate_lib_rs(&config);
-    fs::write(plugin_dir.join("src/lib.rs"), lib_rs)
-        .context("写入 lib.rs 失败")?;
+    fs::write(plugin_dir.join("src/lib.rs"), lib_rs).context("写入 lib.rs 失败")?;
 
     // 生成 README.md
     let readme = generate_readme(&config);
-    fs::write(plugin_dir.join("README.md"), readme)
-        .context("写入 README.md 失败")?;
+    fs::write(plugin_dir.join("README.md"), readme).context("写入 README.md 失败")?;
 
     // 添加到工作空间（如果需要）
     update_workspace_members(&project_root, &config.name)?;
@@ -83,7 +83,8 @@ pub async fn create_plugin_from_template(config: PluginConfig) -> Result<CreateP
 }
 
 fn generate_cargo_toml(config: &PluginConfig) -> String {
-    format!(r#"[workspace]
+    format!(
+        r#"[workspace]
 
 [package]
 name = "{}"
@@ -100,11 +101,8 @@ extism-pdk = "1.0"
 serde = {{ version = "1.0", features = ["derive"] }}
 serde_json = "1.0"
 chrono = "0.4"
-"#, 
-        config.name,
-        config.version,
-        config.author,
-        config.description
+"#,
+        config.name, config.version, config.author, config.description
     )
 }
 
@@ -118,7 +116,8 @@ fn generate_lib_rs(config: &PluginConfig) -> String {
 }
 
 fn generate_data_collector_template(config: &PluginConfig) -> String {
-    format!(r#"//! {}
+    format!(
+        r#"//! {}
 //! 
 //! {}
 //! 
@@ -208,7 +207,7 @@ pub fn info() -> FnResult<String> {{
         "description": "{}"
     }}).to_string())
 }}
-"#, 
+"#,
         config.display_name,
         config.description,
         config.author,
@@ -222,7 +221,8 @@ pub fn info() -> FnResult<String> {{
 }
 
 fn generate_analyzer_template(config: &PluginConfig) -> String {
-    format!(r#"//! {}
+    format!(
+        r#"//! {}
 //! 
 //! {}
 //! 
@@ -338,7 +338,8 @@ pub fn info() -> FnResult<String> {{
 }
 
 fn generate_ui_widget_template(config: &PluginConfig) -> String {
-    format!(r#"//! {}
+    format!(
+        r#"//! {}
 //! 
 //! {}
 //! 
@@ -453,7 +454,8 @@ fn generate_basic_template(config: &PluginConfig) -> String {
 }
 
 fn generate_readme(config: &PluginConfig) -> String {
-    format!(r#"# {} {}
+    format!(
+        r#"# {} {}
 
 {}
 
@@ -508,7 +510,7 @@ fn update_workspace_members(project_root: &PathBuf, plugin_name: &str) -> Result
     }
 
     let content = fs::read_to_string(&cargo_toml_path)?;
-    
+
     // 检查是否已经包含该插件
     let plugin_path = format!("plugins/{}", plugin_name);
     if content.contains(&plugin_path) {
@@ -519,15 +521,15 @@ fn update_workspace_members(project_root: &PathBuf, plugin_name: &str) -> Result
     if let Some(members_start) = content.find("members = [") {
         if let Some(members_end) = content[members_start..].find(']') {
             let members_end = members_start + members_end;
-            
+
             // 在 members 数组末尾添加新插件
             let before = &content[..members_end];
             let after = &content[members_end..];
-            
+
             // 查找最后一个逗号的位置，确保格式正确
             let insert_pos = before.rfind(',').map(|p| p + 1).unwrap_or(members_end);
             let indent = "    "; // 4 spaces
-            
+
             let new_content = format!(
                 "{}\n{}\"plugins/{}\",{}",
                 &content[..insert_pos],
@@ -535,7 +537,7 @@ fn update_workspace_members(project_root: &PathBuf, plugin_name: &str) -> Result
                 plugin_name,
                 &content[insert_pos..]
             );
-            
+
             fs::write(cargo_toml_path, new_content)?;
         }
     }

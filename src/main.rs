@@ -1,35 +1,35 @@
 use anyhow::Result;
-use minimal_kernel::config::{Config, Commands, Cli};
-use minimal_kernel::kernel::Kernel;
 use clap::Parser;
+use minimal_kernel::config::{Cli, Commands, Config};
+use minimal_kernel::kernel::Kernel;
 
 #[tokio::main]
 async fn main() -> Result<()> {
     // 解析命令行参数
     let cli = Cli::parse();
-    
+
     // 加载配置
     let config = Config::load_with_cli(cli.clone())?;
-    
+
     // 初始化日志系统
     config.init_logging()?;
-    
+
     tracing::info!("Minimal Kernel Starting...");
-    
+
     // 处理命令行子命令
     if let Some(command) = cli.command {
         handle_command(command, &config).await?;
         return Ok(());
     }
-    
+
     // 初始化内核
     let kernel = Kernel::new(config).await?;
-    
+
     tracing::info!("Minimal Kernel Ready!");
-    
+
     // 运行内核（包含优雅关闭）
     kernel.run().await?;
-    
+
     Ok(())
 }
 
@@ -44,13 +44,18 @@ async fn handle_command(command: Commands, config: &Config) -> Result<()> {
             // 列出所有插件
             let kernel = Kernel::new(config.clone()).await?;
             let plugins = kernel.discover_plugins(&config.plugins.directory)?;
-            
+
             println!("发现的插件:");
             for plugin in plugins {
-                let status = if plugin.loaded { "已加载" } else { "未加载" };
-                println!("  {} - {} ({} bytes) [{}]", 
-                    plugin.name, 
-                    plugin.path.display(), 
+                let status = if plugin.loaded {
+                    "已加载"
+                } else {
+                    "未加载"
+                };
+                println!(
+                    "  {} - {} ({} bytes) [{}]",
+                    plugin.name,
+                    plugin.path.display(),
                     plugin.file_size,
                     status
                 );
@@ -59,7 +64,7 @@ async fn handle_command(command: Commands, config: &Config) -> Result<()> {
         Commands::PluginInfo { name } => {
             // 显示插件信息
             let mut kernel = Kernel::new(config.clone()).await?;
-            
+
             // 尝试加载插件（如果还没加载）
             if !kernel.list_loaded_plugins().contains(&name.as_str()) {
                 let plugins = kernel.discover_plugins(&config.plugins.directory)?;
@@ -67,7 +72,7 @@ async fn handle_command(command: Commands, config: &Config) -> Result<()> {
                     kernel.load_plugin(&name, plugin.path.to_str().unwrap())?;
                 }
             }
-            
+
             // 获取插件信息
             if let Ok(info) = kernel.call_plugin_string(&name, "info", "") {
                 println!("插件信息: {}", info);
@@ -86,6 +91,6 @@ async fn handle_command(command: Commands, config: &Config) -> Result<()> {
             }
         }
     }
-    
+
     Ok(())
 }

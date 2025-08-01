@@ -76,78 +76,80 @@ impl MessageBuilder {
             expires_at: None,
         }
     }
-    
+
     /// 设置接收者
     pub fn to(mut self, to: &str) -> Self {
         self.to = Some(to.to_string());
         self
     }
-    
+
     /// 设置主题
     pub fn topic(mut self, topic: &str) -> Self {
         self.topic = Some(topic.to_string());
         self
     }
-    
+
     /// 设置负载（JSON）
     pub fn payload_json<T: Serialize>(mut self, payload: &T) -> Result<Self, serde_json::Error> {
         self.payload = Some(serde_json::to_vec(payload)?);
         self.message_type = Some("application/json".to_string());
         Ok(self)
     }
-    
+
     /// 设置负载（字符串）
     pub fn payload_string(mut self, payload: &str) -> Self {
         self.payload = Some(payload.as_bytes().to_vec());
         self.message_type = Some("text/plain".to_string());
         self
     }
-    
+
     /// 设置负载（字节）
     pub fn payload_bytes(mut self, payload: Vec<u8>) -> Self {
         self.payload = Some(payload);
         self.message_type = Some("application/octet-stream".to_string());
         self
     }
-    
+
     /// 设置消息类型
     pub fn message_type(mut self, message_type: &str) -> Self {
         self.message_type = Some(message_type.to_string());
         self
     }
-    
+
     /// 添加元数据
     pub fn metadata(mut self, key: &str, value: &str) -> Self {
         self.metadata.insert(key.to_string(), value.to_string());
         self
     }
-    
+
     /// 设置优先级
     pub fn priority(mut self, priority: MessagePriority) -> Self {
         self.priority = priority;
         self
     }
-    
+
     /// 设置过期时间戳（毫秒）
     pub fn expires_at(mut self, expires_at: u64) -> Self {
         self.expires_at = Some(expires_at);
         self
     }
-    
+
     /// 设置生存时间（秒）
     pub fn ttl(mut self, seconds: u64) -> Self {
         let current_time = crate::utils::time::now_millis();
         self.expires_at = Some(current_time + (seconds * 1000));
         self
     }
-    
+
     /// 构建消息
     pub fn build(self) -> Result<PluginMessage, String> {
         let to = self.to.ok_or("Missing 'to' field")?;
         let topic = self.topic.unwrap_or_else(|| "default".to_string());
         let payload = self.payload.unwrap_or_default();
-        let message_type = self.message_type.unwrap_or_else(|| "application/octet-stream".to_string());
-        
+        let message_type = self
+            .message_type
+            .unwrap_or_else(|| "application/octet-stream".to_string());
+
         Ok(PluginMessage {
             id: uuid::Uuid::new_v4().to_string(),
             from: self.from,
@@ -168,7 +170,7 @@ impl PluginMessage {
     pub fn builder(from: &str) -> MessageBuilder {
         MessageBuilder::new(from)
     }
-    
+
     /// 检查消息是否过期
     pub fn is_expired(&self) -> bool {
         if let Some(expires_at) = self.expires_at {
@@ -177,27 +179,27 @@ impl PluginMessage {
             false
         }
     }
-    
+
     /// 获取负载为 JSON
     pub fn payload_json<T: for<'de> Deserialize<'de>>(&self) -> Result<T, serde_json::Error> {
         serde_json::from_slice(&self.payload)
     }
-    
+
     /// 获取负载为字符串
     pub fn payload_string(&self) -> Result<String, std::string::FromUtf8Error> {
         String::from_utf8(self.payload.clone())
     }
-    
+
     /// 获取负载为字节
     pub fn payload_bytes(&self) -> &[u8] {
         &self.payload
     }
-    
+
     /// 获取元数据
     pub fn get_metadata(&self, key: &str) -> Option<&String> {
         self.metadata.get(key)
     }
-    
+
     /// 创建回复消息
     pub fn reply(&self, from: &str) -> MessageBuilder {
         MessageBuilder::new(from)
@@ -205,7 +207,7 @@ impl PluginMessage {
             .topic(&self.topic)
             .metadata("reply_to", &self.id)
     }
-    
+
     /// 转发消息
     pub fn forward(&self, from: &str, to: &str) -> MessageBuilder {
         MessageBuilder::new(from)
@@ -223,12 +225,12 @@ impl PluginMessage {
 pub trait MessageHandler {
     /// 处理消息
     fn handle_message(&mut self, message: &PluginMessage) -> crate::error::PluginResult<()>;
-    
+
     /// 获取支持的消息类型
     fn supported_message_types(&self) -> Vec<String> {
         vec!["*".to_string()]
     }
-    
+
     /// 获取支持的主题
     fn supported_topics(&self) -> Vec<String> {
         vec!["*".to_string()]
@@ -261,37 +263,37 @@ impl MessageFilter {
             min_priority: None,
         }
     }
-    
+
     /// 设置发送者过滤器
     pub fn from(mut self, from: &str) -> Self {
         self.from = Some(from.to_string());
         self
     }
-    
+
     /// 设置接收者过滤器
     pub fn to(mut self, to: &str) -> Self {
         self.to = Some(to.to_string());
         self
     }
-    
+
     /// 设置主题过滤器
     pub fn topic(mut self, topic: &str) -> Self {
         self.topic = Some(topic.to_string());
         self
     }
-    
+
     /// 设置消息类型过滤器
     pub fn message_type(mut self, message_type: &str) -> Self {
         self.message_type = Some(message_type.to_string());
         self
     }
-    
+
     /// 设置最小优先级过滤器
     pub fn min_priority(mut self, priority: MessagePriority) -> Self {
         self.min_priority = Some(priority);
         self
     }
-    
+
     /// 检查消息是否匹配过滤器
     pub fn matches(&self, message: &PluginMessage) -> bool {
         if let Some(ref from) = self.from {
@@ -299,31 +301,31 @@ impl MessageFilter {
                 return false;
             }
         }
-        
+
         if let Some(ref to) = self.to {
             if &message.to != to {
                 return false;
             }
         }
-        
+
         if let Some(ref topic) = self.topic {
             if &message.topic != topic {
                 return false;
             }
         }
-        
+
         if let Some(ref message_type) = self.message_type {
             if &message.message_type != message_type {
                 return false;
             }
         }
-        
+
         if let Some(min_priority) = self.min_priority {
             if message.priority < min_priority {
                 return false;
             }
         }
-        
+
         true
     }
 }
@@ -331,7 +333,7 @@ impl MessageFilter {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_message_builder() {
         let message = PluginMessage::builder("sender")
@@ -341,14 +343,14 @@ mod tests {
             .priority(MessagePriority::High)
             .build()
             .unwrap();
-        
+
         assert_eq!(message.from, "sender");
         assert_eq!(message.to, "receiver");
         assert_eq!(message.topic, "test");
         assert_eq!(message.priority, MessagePriority::High);
         assert_eq!(message.payload_string().unwrap(), "Hello, World!");
     }
-    
+
     #[test]
     fn test_message_filter() {
         let message = PluginMessage::builder("sender")
@@ -358,21 +360,19 @@ mod tests {
             .priority(MessagePriority::High)
             .build()
             .unwrap();
-        
+
         let filter = MessageFilter::new()
             .from("sender")
             .topic("test")
             .min_priority(MessagePriority::Normal);
-        
+
         assert!(filter.matches(&message));
-        
-        let filter = MessageFilter::new()
-            .from("other")
-            .topic("test");
-        
+
+        let filter = MessageFilter::new().from("other").topic("test");
+
         assert!(!filter.matches(&message));
     }
-    
+
     #[test]
     fn test_message_expiration() {
         let mut message = PluginMessage::builder("sender")
@@ -381,9 +381,9 @@ mod tests {
             .payload_string("test")
             .build()
             .unwrap();
-        
+
         assert!(!message.is_expired());
-        
+
         message.expires_at = Some(crate::utils::time::now_millis() - 1000);
         assert!(message.is_expired());
     }

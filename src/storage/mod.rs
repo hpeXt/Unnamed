@@ -5,9 +5,9 @@
 pub mod layout;
 
 use anyhow::Result;
-use sqlx::{SqlitePool, sqlite::SqlitePoolOptions, Row};
-use serde_json::Value as JsonValue;
 use chrono::{DateTime, Utc};
+use serde_json::Value as JsonValue;
+use sqlx::{sqlite::SqlitePoolOptions, Row, SqlitePool};
 use std::path::Path;
 
 /// 插件数据模型
@@ -59,7 +59,7 @@ impl Storage {
     /// 创建新的存储实例
     pub async fn new(database_url: &str) -> Result<Self> {
         tracing::info!("正在初始化存储层...");
-        
+
         // 确保数据库目录存在
         if let Some(parent) = Path::new(database_url.trim_start_matches("sqlite:")).parent() {
             if !parent.exists() && !parent.as_os_str().is_empty() {
@@ -69,7 +69,7 @@ impl Storage {
         }
 
         tracing::info!("正在连接数据库: {}", database_url);
-        
+
         // 创建连接池，添加超时和优化配置
         let pool = SqlitePoolOptions::new()
             .max_connections(5)
@@ -80,7 +80,7 @@ impl Storage {
             .connect(database_url)
             .await
             .map_err(|e| anyhow::anyhow!("无法连接到数据库: {}", e))?;
-        
+
         // 设置 SQLite 优化参数
         tracing::debug!("设置 SQLite 优化参数");
         sqlx::query("PRAGMA journal_mode = WAL")
@@ -97,14 +97,14 @@ impl Storage {
             .await?;
 
         tracing::info!("正在运行数据库迁移...");
-        
+
         // 运行迁移，添加超时保护
         let migrate_result = tokio::time::timeout(
             std::time::Duration::from_secs(10),
-            sqlx::migrate!("./migrations").run(&pool)
+            sqlx::migrate!("./migrations").run(&pool),
         )
         .await;
-        
+
         match migrate_result {
             Ok(Ok(_)) => {
                 tracing::info!("数据库迁移完成");
@@ -144,7 +144,7 @@ impl Storage {
     /// 获取插件数据
     pub async fn get_data(&self, plugin_id: &str, key: &str) -> Result<Option<JsonValue>> {
         let query = "SELECT value FROM plugin_data WHERE plugin_id = ?1 AND key = ?2";
-        
+
         let result = sqlx::query(query)
             .bind(plugin_id)
             .bind(key)
@@ -157,7 +157,7 @@ impl Storage {
     /// 删除插件数据
     pub async fn delete_data(&self, plugin_id: &str, key: &str) -> Result<bool> {
         let query = "DELETE FROM plugin_data WHERE plugin_id = ?1 AND key = ?2";
-        
+
         let result = sqlx::query(query)
             .bind(plugin_id)
             .bind(key)
@@ -170,7 +170,7 @@ impl Storage {
     /// 获取插件的所有键
     pub async fn list_keys(&self, plugin_id: &str) -> Result<Vec<String>> {
         let query = "SELECT key FROM plugin_data WHERE plugin_id = ?1 ORDER BY key";
-        
+
         let rows = sqlx::query(query)
             .bind(plugin_id)
             .fetch_all(&self.pool)
@@ -182,7 +182,7 @@ impl Storage {
     /// 清空插件的所有数据
     pub async fn clear_plugin_data(&self, plugin_id: &str) -> Result<u64> {
         let query = "DELETE FROM plugin_data WHERE plugin_id = ?1";
-        
+
         let result = sqlx::query(query)
             .bind(plugin_id)
             .execute(&self.pool)
@@ -224,8 +224,9 @@ impl Storage {
 
     /// 更新插件活跃时间
     pub async fn update_plugin_activity(&self, plugin_id: &str) -> Result<()> {
-        let query = "UPDATE plugin_metadata SET last_active = CURRENT_TIMESTAMP WHERE plugin_id = ?1";
-        
+        let query =
+            "UPDATE plugin_metadata SET last_active = CURRENT_TIMESTAMP WHERE plugin_id = ?1";
+
         sqlx::query(query)
             .bind(plugin_id)
             .execute(&self.pool)
@@ -237,7 +238,7 @@ impl Storage {
     /// 获取插件元数据
     pub async fn get_plugin_metadata(&self, plugin_id: &str) -> Result<Option<PluginMetadata>> {
         let query = "SELECT * FROM plugin_metadata WHERE plugin_id = ?1";
-        
+
         let result = sqlx::query_as::<_, PluginMetadata>(query)
             .bind(plugin_id)
             .fetch_optional(&self.pool)
@@ -249,7 +250,7 @@ impl Storage {
     /// 列出所有插件
     pub async fn list_plugins(&self) -> Result<Vec<PluginMetadata>> {
         let query = "SELECT * FROM plugin_metadata ORDER BY name";
-        
+
         let result = sqlx::query_as::<_, PluginMetadata>(query)
             .fetch_all(&self.pool)
             .await?;
@@ -260,7 +261,7 @@ impl Storage {
     /// 启用/禁用插件
     pub async fn set_plugin_enabled(&self, plugin_id: &str, enabled: bool) -> Result<()> {
         let query = "UPDATE plugin_metadata SET enabled = ?1 WHERE plugin_id = ?2";
-        
+
         sqlx::query(query)
             .bind(enabled)
             .bind(plugin_id)
@@ -323,17 +324,21 @@ impl Storage {
         offset: i64,
     ) -> Result<Vec<MessageLogEntry>> {
         let query = match plugin_id {
-            Some(_) => r#"
+            Some(_) => {
+                r#"
                 SELECT * FROM message_log 
                 WHERE from_plugin = ?1 OR to_plugin = ?1
                 ORDER BY created_at DESC
                 LIMIT ?2 OFFSET ?3
-            "#,
-            None => r#"
+            "#
+            }
+            None => {
+                r#"
                 SELECT * FROM message_log 
                 ORDER BY created_at DESC
                 LIMIT ?1 OFFSET ?2
-            "#,
+            "#
+            }
         };
 
         let result = match plugin_id {
@@ -379,7 +384,7 @@ impl Storage {
     /// 移除订阅
     pub async fn remove_subscription(&self, plugin_id: &str, topic: &str) -> Result<bool> {
         let query = "DELETE FROM plugin_subscriptions WHERE plugin_id = ?1 AND topic = ?2";
-        
+
         let result = sqlx::query(query)
             .bind(plugin_id)
             .bind(topic)
@@ -392,11 +397,8 @@ impl Storage {
     /// 获取主题的所有订阅者
     pub async fn get_topic_subscribers(&self, topic: &str) -> Result<Vec<String>> {
         let query = "SELECT plugin_id FROM plugin_subscriptions WHERE topic = ?1";
-        
-        let rows = sqlx::query(query)
-            .bind(topic)
-            .fetch_all(&self.pool)
-            .await?;
+
+        let rows = sqlx::query(query).bind(topic).fetch_all(&self.pool).await?;
 
         Ok(rows.into_iter().map(|row| row.get("plugin_id")).collect())
     }
@@ -404,7 +406,7 @@ impl Storage {
     /// 获取插件的所有订阅
     pub async fn get_plugin_subscriptions(&self, plugin_id: &str) -> Result<Vec<String>> {
         let query = "SELECT topic FROM plugin_subscriptions WHERE plugin_id = ?1";
-        
+
         let rows = sqlx::query(query)
             .bind(plugin_id)
             .fetch_all(&self.pool)
@@ -428,7 +430,7 @@ mod tests {
         let temp_dir = TempDir::new().unwrap();
         let db_path = temp_dir.path().join("test.db");
         let db_url = format!("sqlite:{}", db_path.display());
-        
+
         let storage = Storage::new(&db_url).await.unwrap();
         (storage, temp_dir)
     }
@@ -436,14 +438,14 @@ mod tests {
     #[tokio::test]
     async fn test_store_and_get_data() {
         let (storage, _temp_dir) = setup_test_db().await;
-        
+
         let plugin_id = "test_plugin";
         let key = "test_key";
         let value = serde_json::json!({"data": "test_value"});
-        
+
         // 存储数据
         storage.store_data(plugin_id, key, &value).await.unwrap();
-        
+
         // 读取数据
         let retrieved = storage.get_data(plugin_id, key).await.unwrap();
         assert_eq!(retrieved, Some(value));
@@ -452,18 +454,18 @@ mod tests {
     #[tokio::test]
     async fn test_update_data() {
         let (storage, _temp_dir) = setup_test_db().await;
-        
+
         let plugin_id = "test_plugin";
         let key = "test_key";
         let value1 = serde_json::json!({"data": "value1"});
         let value2 = serde_json::json!({"data": "value2"});
-        
+
         // 第一次存储
         storage.store_data(plugin_id, key, &value1).await.unwrap();
-        
+
         // 更新数据
         storage.store_data(plugin_id, key, &value2).await.unwrap();
-        
+
         // 验证更新
         let retrieved = storage.get_data(plugin_id, key).await.unwrap();
         assert_eq!(retrieved, Some(value2));
@@ -472,18 +474,18 @@ mod tests {
     #[tokio::test]
     async fn test_delete_data() {
         let (storage, _temp_dir) = setup_test_db().await;
-        
+
         let plugin_id = "test_plugin";
         let key = "test_key";
         let value = serde_json::json!({"data": "test_value"});
-        
+
         // 存储数据
         storage.store_data(plugin_id, key, &value).await.unwrap();
-        
+
         // 删除数据
         let deleted = storage.delete_data(plugin_id, key).await.unwrap();
         assert!(deleted);
-        
+
         // 验证删除
         let retrieved = storage.get_data(plugin_id, key).await.unwrap();
         assert_eq!(retrieved, None);
@@ -492,16 +494,16 @@ mod tests {
     #[tokio::test]
     async fn test_list_keys() {
         let (storage, _temp_dir) = setup_test_db().await;
-        
+
         let plugin_id = "test_plugin";
         let keys = vec!["key1", "key2", "key3"];
         let value = serde_json::json!({"data": "test"});
-        
+
         // 存储多个键
         for key in &keys {
             storage.store_data(plugin_id, key, &value).await.unwrap();
         }
-        
+
         // 列出键
         let listed_keys = storage.list_keys(plugin_id).await.unwrap();
         assert_eq!(listed_keys.len(), keys.len());

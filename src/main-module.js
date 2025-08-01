@@ -8,6 +8,8 @@ import { onboarding } from './onboarding/onboarding.js';
 import { pluginCreator } from './plugin-creator/plugin-creator.js';
 // 导入插件选择器
 import { pluginSelector } from './plugin-selector/plugin-selector.js';
+// 导入调试控制台
+import { DebugConsoleManager } from './debug-console/debug-console.js';
 
 console.log('Minimal Kernel Dashboard - Loading (Module)...');
 
@@ -110,6 +112,14 @@ function setupBasicListeners() {
             }
         });
     }
+    
+    const debugButton = document.getElementById('debug-console');
+    if (debugButton) {
+        debugButton.addEventListener('click', () => {
+            console.log('Debug console clicked');
+            new DebugConsoleManager();
+        });
+    }
 }
 
 // 更新容器列表
@@ -193,6 +203,11 @@ window.showPreferences = function() {
     } else {
         console.log('尚未设置用户偏好');
     }
+};
+
+// 开发工具：显示插件调试控制台
+window.showDebugConsole = function() {
+    new DebugConsoleManager();
 };
 
 
