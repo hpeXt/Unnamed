@@ -2,6 +2,8 @@
 
 // 导入 Tauri API 封装
 import { invoke, isTauri, getVersion, listen, PluginMessageBus } from './tauri-api.js';
+// 导入引导管理器
+import { onboarding } from './onboarding/onboarding.js';
 
 console.log('Minimal Kernel Dashboard - Loading (Module)...');
 
@@ -160,6 +162,26 @@ window.testPluginCommunication = async function() {
         } catch (error) {
             console.error('Failed to send test message:', error);
         }
+    }
+};
+
+// 开发工具：重置引导流程（用于测试）
+window.resetOnboarding = function() {
+    if (confirm('确定要重置引导流程吗？这将清除所有用户偏好设置。')) {
+        localStorage.removeItem('onboarding_completed');
+        localStorage.removeItem('user_preferences');
+        localStorage.removeItem('user_theme');
+        location.reload();
+    }
+};
+
+// 开发工具：显示当前用户偏好设置
+window.showPreferences = function() {
+    const prefs = localStorage.getItem('user_preferences');
+    if (prefs) {
+        console.log('用户偏好设置:', JSON.parse(prefs));
+    } else {
+        console.log('尚未设置用户偏好');
     }
 };
 
@@ -355,6 +377,34 @@ async function initApp() {
             event: !!window.__TAURI__.event,
             listen: !!window.__TAURI__.event?.listen
         });
+    }
+    
+    // 检查并启动引导流程
+    const onboardingShown = await onboarding.init();
+    if (onboardingShown) {
+        console.log('Showing onboarding flow for first-time user');
+        // 监听引导完成事件
+        window.addEventListener('onboarding-completed', (event) => {
+            console.log('Onboarding completed with preferences:', event.detail);
+            // 引导完成后继续初始化
+            continueAppInit();
+        });
+        return; // 等待引导完成
+    }
+    
+    // 如果不需要引导，直接继续初始化
+    await continueAppInit();
+}
+
+// 继续应用初始化（引导完成后或跳过引导时调用）
+async function continueAppInit() {
+    console.log('=== Continuing app initialization ===');
+    
+    // 应用保存的主题偏好
+    const savedTheme = localStorage.getItem('user_theme');
+    if (savedTheme) {
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        console.log('Applied saved theme:', savedTheme);
     }
     
     // 更新时间
