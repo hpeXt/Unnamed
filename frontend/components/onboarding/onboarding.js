@@ -15,7 +15,16 @@ export class OnboardingManager {
     
     // 初始化引导界面
     async init() {
+        // 检查是否已完成引导
         if (this.isCompleted) {
+            return false;
+        }
+        
+        // 开发模式下跳过引导
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('skipOnboarding') === 'true') {
+            console.log('Skipping onboarding in development mode');
+            this.complete();
             return false;
         }
         

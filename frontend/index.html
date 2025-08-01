@@ -18,6 +18,7 @@
                 <button id="add-widget">添加插件</button>
                 <button id="layout-settings">布局设置</button>
                 <button id="debug-console" title="插件调试控制台">🔧 调试</button>
+                <button id="show-diagnostics" title="显示诊断信息">🏥 诊断</button>
             </div>
         </header>
         
@@ -38,6 +39,13 @@
                 <span id="system-time">--:--:--</span>
             </div>
         </footer>
+    </div>
+
+    <!-- 诊断信息面板 -->
+    <div id="diagnostics-panel" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background: #222; color: #fff; padding: 20px; max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 12px;">
+        <button onclick="document.getElementById('diagnostics-panel').style.display='none'" style="position: absolute; top: 5px; right: 5px; background: #444; color: #fff; border: none; padding: 5px 10px; cursor: pointer;">关闭</button>
+        <h3>诊断信息</h3>
+        <div id="diagnostics-content"></div>
     </div>
 
     <script type="module" src="js/main-module.js"></script>

@@ -13,6 +13,88 @@ import { DebugConsoleManager } from '../components/debug-console/debug-console.j
 
 console.log('Minimal Kernel Dashboard - Loading (Module)...');
 
+// 全局错误捕获
+window.addEventListener('error', (event) => {
+    console.error('Global error:', event.error);
+    showDiagnosticMessage(`错误: ${event.message}\n文件: ${event.filename}\n行号: ${event.lineno}`);
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+    console.error('Unhandled promise rejection:', event.reason);
+    showDiagnosticMessage(`未处理的 Promise 错误: ${event.reason}`);
+});
+
+// 显示诊断信息
+function showDiagnosticMessage(message) {
+    const panel = document.getElementById('diagnostics-panel');
+    const content = document.getElementById('diagnostics-content');
+    if (panel && content) {
+        const timestamp = new Date().toLocaleTimeString();
+        content.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+        panel.style.display = 'block';
+    }
+}
+
+// 显示完整诊断信息
+async function showDiagnostics() {
+    const panel = document.getElementById('diagnostics-panel');
+    const content = document.getElementById('diagnostics-content');
+    
+    if (!panel || !content) return;
+    
+    content.innerHTML = '<h4>系统诊断信息</h4>';
+    
+    // 检查 Tauri 环境
+    content.innerHTML += `<div>Tauri 可用: ${isTauri() ? '是' : '否'}</div>`;
+    content.innerHTML += `<div>window.__TAURI__ 存在: ${!!window.__TAURI__}</div>`;
+    
+    if (window.__TAURI__) {
+        content.innerHTML += '<div>Tauri API 结构:</div>';
+        content.innerHTML += `<div>  - core: ${!!window.__TAURI__.core}</div>`;
+        content.innerHTML += `<div>  - core.invoke: ${!!window.__TAURI__.core?.invoke}</div>`;
+        content.innerHTML += `<div>  - event: ${!!window.__TAURI__.event}</div>`;
+        content.innerHTML += `<div>  - app: ${!!window.__TAURI__.app}</div>`;
+    }
+    
+    // 检查 localStorage
+    content.innerHTML += '<div><br>LocalStorage 状态:</div>';
+    content.innerHTML += `<div>  - onboarding_completed: ${localStorage.getItem('onboarding_completed')}</div>`;
+    content.innerHTML += `<div>  - user_theme: ${localStorage.getItem('user_theme')}</div>`;
+    
+    // 测试 Tauri 命令
+    if (isTauri()) {
+        content.innerHTML += '<div><br>测试 Tauri 命令:</div>';
+        try {
+            const ready = await invoke('is_app_ready');
+            content.innerHTML += `<div>  ✅ is_app_ready: ${ready}</div>`;
+        } catch (error) {
+            content.innerHTML += `<div>  ❌ is_app_ready 错误: ${error.message}</div>`;
+        }
+        
+        try {
+            const plugins = await invoke('get_plugins');
+            content.innerHTML += `<div>  ✅ get_plugins: ${plugins.length} 个插件</div>`;
+        } catch (error) {
+            content.innerHTML += `<div>  ❌ get_plugins 错误: ${error.message}</div>`;
+        }
+    }
+    
+    // 检查按钮事件
+    content.innerHTML += '<div><br>按钮状态:</div>';
+    const addButton = document.getElementById('add-widget');
+    content.innerHTML += `<div>  - 添加插件按钮存在: ${!!addButton}</div>`;
+    if (addButton) {
+        const listeners = addButton.onclick || addButton.addEventListener;
+        content.innerHTML += `<div>  - 有事件监听器: ${!!listeners}</div>`;
+    }
+    
+    panel.style.display = 'block';
+}
+
+// 导出诊断函数到全局，方便调试
+window.showDiagnostics = showDiagnostics;
+window.showDiagnosticMessage = showDiagnosticMessage;
+
 // 等待应用就绪
 async function waitForAppReady() {
     console.log('Waiting for app to be ready...');
@@ -41,6 +123,15 @@ async function waitForAppReady() {
 
 // 设置基本事件监听
 function setupBasicListeners() {
+    // 诊断按钮
+    const diagnosticsButton = document.getElementById('show-diagnostics');
+    if (diagnosticsButton) {
+        diagnosticsButton.addEventListener('click', () => {
+            console.log('Diagnostics button clicked');
+            showDiagnostics();
+        });
+    }
+    
     const addButton = document.getElementById('add-widget');
     if (addButton) {
         addButton.addEventListener('click', async () => {
@@ -368,6 +459,9 @@ async function initApp() {
     console.log('Tauri available:', isTauri());
     console.log('Window.__TAURI__:', window.__TAURI__);
     
+    // 显示初始化诊断
+    showDiagnosticMessage('应用开始初始化...');
+    
     if (isTauri() && window.__TAURI__) {
         console.log('Tauri API details:', {
             core: !!window.__TAURI__.core,
@@ -375,6 +469,9 @@ async function initApp() {
             event: !!window.__TAURI__.event,
             listen: !!window.__TAURI__.event?.listen
         });
+        showDiagnosticMessage('Tauri API 已加载');
+    } else {
+        showDiagnosticMessage('警告: Tauri API 未加载！');
     }
     
     // 检查并启动引导流程
@@ -397,6 +494,7 @@ async function initApp() {
 // 继续应用初始化（引导完成后或跳过引导时调用）
 async function continueAppInit() {
     console.log('=== Continuing app initialization ===');
+    showDiagnosticMessage('继续应用初始化...');
     
     // 应用保存的主题偏好
     const savedTheme = localStorage.getItem('user_theme');
@@ -440,12 +538,16 @@ async function continueAppInit() {
     document.getElementById('memory-usage').textContent = '内存: --';
     
     // 设置基本事件监听
+    console.log('Setting up basic listeners...');
+    showDiagnosticMessage('设置事件监听器...');
     setupBasicListeners();
+    showDiagnosticMessage('事件监听器设置完成');
     
     // 设置内核消息监听（用于调试）
     setupKernelMessageListener();
     
     console.log('Application initialized successfully');
+    showDiagnosticMessage('应用初始化完成！');
 }
 
 // 显示布局菜单

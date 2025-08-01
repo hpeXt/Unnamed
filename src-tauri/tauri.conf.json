@@ -8,6 +8,7 @@
     "frontendDist": "../frontend"
   },
   "app": {
+    "withGlobalTauri": true,
     "windows": [
       {
         "title": "Minimal Kernel Dashboard",
@@ -21,12 +22,13 @@
         "center": true,
         "decorations": true,
         "transparent": false,
-        "visible": true
+        "visible": true,
+        "devtools": true
       }
     ],
     "security": {
       "csp": null,
-      "capabilities": ["default"]
+      "dangerousDisableAssetCspModification": true
     }
   },
   "bundle": {
