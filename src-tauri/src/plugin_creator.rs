@@ -524,7 +524,7 @@ fn update_workspace_members(project_root: &PathBuf, plugin_name: &str) -> Result
 
             // 在 members 数组末尾添加新插件
             let before = &content[..members_end];
-            let after = &content[members_end..];
+            let _after = &content[members_end..];
 
             // 查找最后一个逗号的位置，确保格式正确
             let insert_pos = before.rfind(',').map(|p| p + 1).unwrap_or(members_end);

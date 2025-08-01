@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 use std::collections::HashMap;
 use std::sync::Arc;
-use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindowBuilder};
+use tauri::{AppHandle, Emitter, Manager, WebviewUrl, WebviewWindowBuilder};
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
@@ -368,6 +368,9 @@ impl ContainerManager {
             status: ContainerStatus::Active,
         };
 
+        // 先保存widget的克隆用于emit
+        let widget_clone = widget.clone();
+        
         self.inline_widgets
             .write()
             .await
@@ -375,7 +378,7 @@ impl ContainerManager {
 
         // 通知前端创建组件
         if let Some(app_handle) = self.app_handle.read().await.as_ref() {
-            app_handle.emit("create-inline-widget", &widget)?;
+            app_handle.emit("create-inline-widget", &widget_clone)?;
         }
 
         Ok(widget_id)

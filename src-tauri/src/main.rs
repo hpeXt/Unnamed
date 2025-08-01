@@ -116,10 +116,10 @@ async fn save_layout(
         widgets.push(minimal_kernel::storage::layout::CreateWidgetRequest {
             widget_type: widget.widget_type,
             plugin_id: Some(widget.plugin_id),
-            position_col: widget.position.col as i32,
-            position_row: widget.position.row as i32,
-            size_col_span: widget.size.col_span as i32,
-            size_row_span: widget.size.row_span as i32,
+            position_col: widget.position.col as i64,
+            position_row: widget.position.row as i64,
+            size_col_span: widget.size.col_span as i64,
+            size_row_span: widget.size.row_span as i64,
             config: Some(widget.config),
         });
     }
@@ -396,7 +396,8 @@ fn main() {
                             }
                         }
 
-                        plugin_watcher::init(app_handle.clone(), kernel_bridge_clone.clone());
+                        // TODO: 插件监视功能待实现
+                        // plugin_watcher::init(app_handle.clone(), kernel_bridge_clone.clone());
 
                         // 标记应用已就绪
                         app_state_for_init.set_ready();
@@ -433,6 +434,8 @@ fn main() {
             remove_inline_widget,
             list_inline_widgets,
             update_inline_widget,
+            get_plugin_logs,
+            clear_plugin_logs,
             system_monitor::get_system_stats,
             system_monitor::get_processes,
             system_monitor::start_system_monitoring,

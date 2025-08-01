@@ -2,7 +2,7 @@ use anyhow::{anyhow, Result};
 use minimal_kernel::kernel::message::Message;
 use minimal_kernel::kernel::Kernel;
 use minimal_kernel::storage::layout::{
-    CreateWidgetRequest, DashboardLayout, LayoutManager, LayoutWidget,
+    CreateWidgetRequest, LayoutManager, LayoutWidget,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -209,16 +209,11 @@ impl KernelBridge {
                 .map_err(|e| anyhow!("Failed to serialize message: {}", e))?;
 
             // 创建内核消息
-            let msg = Message::new("tauri-ui".to_string(), plugin_id.to_string(), payload)
-                .with_topic("ui.message".to_string());
+            let msg = Message::new("tauri-ui".to_string(), plugin_id.to_string(), payload);
 
             // 获取消息总线句柄并发送消息
             let bus_handle = kernel.get_message_bus_handle();
-            let sender = bus_handle.get_sender();
-            sender
-                .send(msg)
-                .await
-                .map_err(|e| anyhow!("Failed to send message: {}", e))?;
+            bus_handle.send_message(msg).await?;
 
             tracing::debug!("Sent message to plugin {}", plugin_id);
             Ok(())
@@ -374,23 +369,6 @@ impl KernelBridge {
         }
     }
 
-    /// 发送消息到插件
-    pub async fn send_message(&self, plugin_id: &str, message: Value) -> Result<()> {
-        let kernel_guard = self.kernel.lock().await;
-        if let Some(kernel) = kernel_guard.as_ref() {
-            let bus_handle = kernel.get_message_bus_handle();
-
-            // 创建消息
-            let msg = Message::new("tauri-bridge".to_string(), plugin_id.to_string())
-                .with_payload(message.to_string().into_bytes());
-
-            // 发送消息
-            bus_handle.send_message(&msg.to, msg).await?;
-            Ok(())
-        } else {
-            Err(anyhow!("Kernel not initialized"))
-        }
-    }
 
     /// 保存布局
     pub async fn save_layout(

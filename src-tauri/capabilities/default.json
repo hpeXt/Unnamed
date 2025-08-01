@@ -17,7 +17,19 @@
     "core:webview:allow-create-webview-window",
     "core:webview:allow-set-webview-position",
     "core:webview:allow-set-webview-size",
-    "core:webview:allow-webview-close"
+    "core:webview:allow-webview-close",
+    "app-commands:allow-create-plugin-container",
+    "app-commands:allow-remove-plugin-container",
+    "app-commands:allow-list-containers",
+    "app-commands:allow-create-plugin-from-template",
+    "app-commands:allow-layout-management",
+    "app-commands:allow-plugin-management",
+    "app-commands:allow-plugin-communication",
+    "app-commands:allow-ui-plugin-management",
+    "app-commands:allow-app-status",
+    "app-commands:allow-inline-widget-management",
+    "app-commands:allow-plugin-logs",
+    "app-commands:allow-system-monitoring"
   ],
   "platforms": ["linux", "macOS", "windows"]
 }
