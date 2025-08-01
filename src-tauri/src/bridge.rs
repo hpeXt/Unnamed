@@ -29,6 +29,7 @@ pub struct UIMessage {
     pub timestamp: u64,
 }
 
+#[derive(Clone)]
 pub struct KernelBridge {
     kernel: Arc<Mutex<Option<Kernel>>>,
     kernel_handle: Arc<Mutex<Option<JoinHandle<()>>>>,
@@ -36,6 +37,8 @@ pub struct KernelBridge {
     ui_subscriptions: Arc<RwLock<HashMap<String, HashSet<String>>>>,
     /// 消息监听器任务句柄
     message_listener_handle: Arc<Mutex<Option<JoinHandle<()>>>>,
+    /// 插件目录监视任务句柄
+    plugin_watcher_handle: Arc<Mutex<Option<JoinHandle<()>>>>,
 }
 
 impl KernelBridge {
@@ -45,6 +48,7 @@ impl KernelBridge {
             kernel_handle: Arc::new(Mutex::new(None)),
             ui_subscriptions: Arc::new(RwLock::new(HashMap::new())),
             message_listener_handle: Arc::new(Mutex::new(None)),
+            plugin_watcher_handle: Arc::new(Mutex::new(None)),
         }
     }
 
@@ -304,6 +308,47 @@ impl KernelBridge {
         } else {
             Err(anyhow!("Kernel not initialized"))
         }
+    }
+
+    /// 监视插件目录，文件变化时自动重新加载
+    pub async fn start_plugin_watcher(&self, app_handle: AppHandle) -> Result<()> {
+        let plugin_dir = self.get_plugin_directory(&app_handle)?;
+        let bridge = self.clone();
+        let handle = tokio::spawn(async move {
+            use notify::{RecommendedWatcher, RecursiveMode, Watcher, EventKind};
+            use notify::Config as NotifyConfig;
+            use tokio::sync::mpsc::unbounded_channel;
+
+            let (tx, mut rx) = unbounded_channel();
+            let mut watcher = RecommendedWatcher::new(move |res| {
+                let _ = tx.send(res);
+            }, NotifyConfig::default()).expect("watcher");
+
+            if watcher.watch(&plugin_dir, RecursiveMode::Recursive).is_err() {
+                tracing::error!("Failed to watch plugin directory: {}", plugin_dir.display());
+                return;
+            }
+
+            tracing::info!("Plugin watcher started on {}", plugin_dir.display());
+            while let Some(res) = rx.recv().await {
+                match res {
+                    Ok(event) => {
+                        match event.kind {
+                            EventKind::Modify(_) | EventKind::Create(_) | EventKind::Remove(_) => {
+                                if let Err(e) = bridge.load_plugins(app_handle.clone()).await {
+                                    tracing::error!("Hot reload failed: {}", e);
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                    Err(e) => tracing::error!("Watch error: {}", e),
+                }
+            }
+        });
+
+        *self.plugin_watcher_handle.lock().await = Some(handle);
+        Ok(())
     }
     
     /// 取消 UI 插件的订阅

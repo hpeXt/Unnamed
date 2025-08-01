@@ -8,6 +8,7 @@ use crate::kernel::message::Message;
 use crate::kernel::message_bus::MessageBusHandle;
 use crate::storage::Storage;
 use crate::identity::IdentityManager;
+use chrono;
 use std::sync::{Arc, Mutex};
 use std::collections::BTreeMap;
 
@@ -173,7 +174,7 @@ host_fn!(send_message(user_data: ContextStore; from: String, to: String, payload
 });
 
 // 简单的日志函数（不需要用户数据）
-host_fn!(log_message(level: String, message: String) -> String {
+host_fn!(log_message(user_data: ContextStore; level: String, message: String) -> String {
     match level.as_str() {
         "error" => eprintln!("[PLUGIN ERROR] {}", message),
         "warn" => eprintln!("[PLUGIN WARN] {}", message),
@@ -181,7 +182,29 @@ host_fn!(log_message(level: String, message: String) -> String {
         "debug" => println!("[PLUGIN DEBUG] {}", message),
         _ => println!("[PLUGIN] {}", message),
     }
-    
+
+    // 通过消息总线转发日志
+    let store = user_data.get()?;
+    let store = store.lock().unwrap();
+    let inner_store = store.lock().unwrap();
+
+    if let Some(ctx_arc) = inner_store.get("context") {
+        let ctx = ctx_arc.lock().unwrap();
+        let payload = serde_json::json!({
+            "level": level,
+            "message": message,
+            "timestamp": chrono::Utc::now().timestamp_millis(),
+        }).to_string();
+
+        let msg = Message::new(
+            "host-log".to_string(),
+            "tauri-bridge".to_string(),
+            payload.into_bytes(),
+        ).with_topic("plugin.log".to_string());
+
+        let _ = ctx.msg_sender.try_send(msg);
+    }
+
     Ok("logged".to_string())
 });
 
@@ -436,7 +459,7 @@ pub fn build_plugin_with_host_functions(
             "log_message_host",
             [PTR],
             [PTR],
-            UserData::new(()),
+            context_store.clone(),
             log_message,
         )
         .with_function(

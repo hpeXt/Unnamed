@@ -361,6 +361,12 @@ fn main() {
                                 tracing::error!("Failed to start message listener: {}", e);
                             }
                         }
+
+                        // 启动插件目录监视
+                        match kernel_bridge_clone.start_plugin_watcher(app_handle_for_listener).await {
+                            Ok(_) => tracing::info!("Plugin watcher started"),
+                            Err(e) => tracing::error!("Failed to start plugin watcher: {}", e),
+                        }
                         
                         // 标记应用已就绪
                         app_state_for_init.set_ready();
