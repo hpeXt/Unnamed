@@ -5,11 +5,13 @@ mod container;
 mod bridge;
 mod system_monitor;
 mod app_state;
+mod plugin_creator;
 
 use container::{ContainerManager, RenderMode, ContainerPosition, ContainerSize, GridPosition, GridSize};
 use bridge::KernelBridge;
 use system_monitor::SystemMonitor;
 use app_state::{AppState, is_app_ready};
+use plugin_creator::{PluginConfig, CreatePluginResult};
 use tauri::{State, Manager};
 use std::sync::Arc;
 use serde::{Deserialize, Serialize};
@@ -83,6 +85,16 @@ async fn list_containers(
     container_manager: State<'_, Arc<ContainerManager>>,
 ) -> Result<Vec<container::PluginContainer>, String> {
     Ok(container_manager.list_containers().await)
+}
+
+// Tauri 命令：从模板创建插件
+#[tauri::command]
+async fn create_plugin_from_template(
+    config: PluginConfig,
+) -> Result<CreatePluginResult, String> {
+    plugin_creator::create_plugin_from_template(config)
+        .await
+        .map_err(|e| format!("创建插件失败: {}", e))
 }
 
 // Tauri 命令：保存当前布局
@@ -369,6 +381,7 @@ fn main() {
             create_plugin_container,
             remove_plugin_container,
             list_containers,
+            create_plugin_from_template,
             save_layout,
             list_layouts,
             apply_layout,

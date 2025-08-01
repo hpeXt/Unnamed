@@ -416,15 +416,22 @@ pub fn process() -> FnResult<String> {
             document.getElementById('next-step').disabled = true;
             document.getElementById('next-step').textContent = '创建中...';
             
-            // 调用后端创建插件
-            const result = await window.__TAURI__.core.invoke('create_plugin_from_template', {
-                config: this.pluginConfig
-            });
+            // 调用后端创建插件 - 注意参数名要与 Rust 端匹配
+            const result = await window.__TAURI__.core.invoke('create_plugin_from_template', this.pluginConfig);
             
-            console.log('插件创建成功:', result);
+            console.log('插件创建结果:', result);
             
-            // 显示成功消息
-            alert(`插件 "${this.pluginConfig.displayName}" 创建成功！\n\n位置: plugins/${this.pluginConfig.name}/`);
+            if (result.success) {
+                // 显示成功消息
+                alert(`${result.message}\n\n位置: ${result.path}\n\n下一步：\n1. 在终端运行 cd plugins/${this.pluginConfig.name}\n2. 运行 cargo build --target wasm32-unknown-unknown --release`);
+            } else {
+                // 显示错误消息
+                alert(`创建插件失败: ${result.message}`);
+                // 恢复按钮状态
+                document.getElementById('next-step').disabled = false;
+                document.getElementById('next-step').textContent = '创建插件';
+                return;
+            }
             
             // 关闭创建器
             this.close();

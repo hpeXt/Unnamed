@@ -38,6 +38,7 @@
                 "create_plugin_container",
                 "remove_plugin_container",
                 "list_containers",
+                "create_plugin_from_template",
                 "apply_layout",
                 "save_layout",
                 "list_layouts",
