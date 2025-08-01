@@ -78,7 +78,7 @@ impl From<LogLevel> for Level {
 }
 
 /// 主配置结构
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(default)]
 pub struct Config {
     /// 数据库配置
@@ -175,17 +175,6 @@ pub struct IdentityConfig {
     pub allow_env_key: bool,
 }
 
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            database: DatabaseConfig::default(),
-            plugins: PluginConfig::default(),
-            logging: LoggingConfig::default(),
-            network: NetworkConfig::default(),
-            identity: IdentityConfig::default(),
-        }
-    }
-}
 
 impl Default for DatabaseConfig {
     fn default() -> Self {

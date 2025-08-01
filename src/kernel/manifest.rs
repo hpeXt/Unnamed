@@ -66,11 +66,11 @@ impl PluginManifest {
         let content = std::fs::read_to_string(path.as_ref())
             .map_err(|e| anyhow!("读取清单文件失败: {}", e))?;
 
-        Self::from_str(&content)
+        Self::parse_manifest(&content)
     }
 
     /// 从字符串解析清单
-    pub fn from_str(content: &str) -> Result<Self> {
+    pub fn parse_manifest(content: &str) -> Result<Self> {
         toml::from_str(content).map_err(|e| anyhow!("解析清单文件失败: {}", e))
     }
 
@@ -209,7 +209,7 @@ tags = ["test", "example"]
 min_kernel_version = "0.1.0"
 "#;
 
-        let manifest = PluginManifest::from_str(manifest_content).unwrap();
+        let manifest = PluginManifest::parse_manifest(manifest_content).unwrap();
 
         assert_eq!(manifest.plugin.name, "test-plugin");
         assert_eq!(manifest.plugin.version, "1.0.0");

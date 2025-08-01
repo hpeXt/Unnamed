@@ -166,7 +166,7 @@ host_fn!(send_message(user_data: ContextStore; from: String, to: String, payload
         let msg_id = msg.id.clone();
 
         ctx.msg_sender.try_send(msg)
-            .map_err(|e| extism::Error::msg(format!("Failed to send message: {}", e)))?;
+            .map_err(|e| extism::Error::msg(format!("Failed to send message: {e}")))?;
 
         Ok(msg_id)
     } else {
@@ -230,7 +230,7 @@ host_fn!(verify_signature(user_data: ContextStore; plugin_id: String, message: S
         if let Some(identity) = &ctx.identity {
             // 将十六进制签名转换为字节
             let signature_bytes = hex::decode(&signature)
-                .map_err(|e| extism::Error::msg(format!("Invalid signature hex: {}", e)))?;
+                .map_err(|e| extism::Error::msg(format!("Invalid signature hex: {e}")))?;
 
             let runtime = tokio::runtime::Handle::current();
             let is_valid = runtime.block_on(async {
@@ -353,7 +353,7 @@ host_fn!(publish_message(user_data: ContextStore; plugin_id: String, topic: Stri
 
         // 发送消息
         ctx.msg_sender.try_send(msg)
-            .map_err(|e| extism::Error::msg(format!("Failed to send topic message: {}", e)))?;
+            .map_err(|e| extism::Error::msg(format!("Failed to send topic message: {e}")))?;
 
         let result = serde_json::json!({
             "success": true,
@@ -372,7 +372,7 @@ host_fn!(publish_message(user_data: ContextStore; plugin_id: String, topic: Stri
 host_fn!(get_timestamp_host() -> String {
     let timestamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
-        .map_err(|e| extism::Error::msg(format!("Time error: {}", e)))?
+        .map_err(|e| extism::Error::msg(format!("Time error: {e}")))?
         .as_secs();
 
     Ok(timestamp.to_string())
@@ -381,7 +381,7 @@ host_fn!(get_timestamp_host() -> String {
 host_fn!(get_timestamp_millis_host() -> String {
     let timestamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
-        .map_err(|e| extism::Error::msg(format!("Time error: {}", e)))?
+        .map_err(|e| extism::Error::msg(format!("Time error: {e}")))?
         .as_millis() as u64;
 
     Ok(timestamp.to_string())
