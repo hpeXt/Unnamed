@@ -5,6 +5,7 @@
 pub mod config;
 pub mod identity;
 pub mod kernel;
+pub mod log_collector;
 pub mod storage;
 
 pub use anyhow::Result;
