@@ -61,14 +61,6 @@ jobs:
           libayatana-appindicator3-dev \
           librsvg2-dev
     
-    - name: Initialize database
-      run: |
-        cargo install sqlx-cli --no-default-features --features sqlite
-        sqlx database create
-        sqlx migrate run
-      env:
-        DATABASE_URL: sqlite:data.db
-    
     - name: Build plugins
       run: |
         ./build-plugins.sh || true
@@ -105,14 +97,6 @@ jobs:
     
     - name: Rust cache
       uses: swatinem/rust-cache@v2
-    
-    - name: Initialize database for tests
-      run: |
-        cargo install sqlx-cli --no-default-features --features sqlite
-        sqlx database create
-        sqlx migrate run
-      env:
-        DATABASE_URL: sqlite:data.db
     
     - name: Run tests
       run: |

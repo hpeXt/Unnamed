@@ -33,15 +33,6 @@ jobs:
     - name: Install Tauri CLI
       run: cargo install tauri-cli
     
-    - name: Install sqlx-cli
-      run: cargo install sqlx-cli --no-default-features --features sqlite
-    
-    - name: Initialize database
-      run: |
-        $env:DATABASE_URL="sqlite:data.db"
-        sqlx database create
-        sqlx migrate run
-    
     - name: Build plugins
       run: |
         $env:DATABASE_URL="sqlite:data.db"
@@ -106,16 +97,6 @@ jobs:
     - name: Install Tauri CLI
       run: cargo install tauri-cli
     
-    - name: Install sqlx-cli
-      run: cargo install sqlx-cli --no-default-features --features sqlite
-    
-    - name: Initialize database
-      run: |
-        sqlx database create
-        sqlx migrate run
-      env:
-        DATABASE_URL: sqlite:data.db
-    
     - name: Build plugins
       run: |
         for plugin in plugins/*/; do
@@ -169,16 +150,6 @@ jobs:
     
     - name: Install Tauri CLI
       run: cargo install tauri-cli
-    
-    - name: Install sqlx-cli
-      run: cargo install sqlx-cli --no-default-features --features sqlite
-    
-    - name: Initialize database
-      run: |
-        sqlx database create
-        sqlx migrate run
-      env:
-        DATABASE_URL: sqlite:data.db
     
     - name: Build plugins
       run: |

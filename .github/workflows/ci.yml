@@ -41,14 +41,6 @@ jobs:
           target/
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
     
-    - name: Initialize database
-      run: |
-        cargo install sqlx-cli --no-default-features --features sqlite
-        sqlx database create
-        sqlx migrate run
-      env:
-        DATABASE_URL: sqlite:data.db
-    
     - name: Check formatting
       run: cargo fmt --all -- --check
       env:

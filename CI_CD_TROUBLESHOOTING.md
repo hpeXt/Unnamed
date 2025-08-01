@@ -41,11 +41,17 @@
 
 ## 实施步骤记录
 
+### 第一阶段：移除编译时宏（已完成）
 1. **识别问题**：SQLite 的 TIMESTAMP 类型映射到 `Option<NaiveDateTime>`，而代码使用 `DateTime<Utc>`
 2. **移除编译时宏**：将 `sqlx::query_as!()` 替换为 `sqlx::query()`
 3. **手动映射字段**：使用 `row.get()` 方法获取每个字段
 4. **处理时间转换**：添加 `naive_to_utc()` 辅助函数
 5. **清理文件**：删除不再需要的 `sqlx-data.json`
+
+### 第二阶段：清理CI配置（已完成）
+1. **移除SQLx CLI安装步骤**：不再需要 `cargo install sqlx-cli`
+2. **移除数据库初始化**：不再需要 `sqlx database create` 和 `sqlx migrate run`
+3. **保留运行时环境变量**：保留 `DATABASE_URL: sqlite:data.db` 供运行时使用
 
 ## 未来建议
 
