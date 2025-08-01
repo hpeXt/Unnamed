@@ -18,13 +18,13 @@ rustflags = ["-C", "opt-level=z"]
 linker = "clang"
 rustflags = ["-C", "link-arg=-fuse-ld=lld", "-C", "target-cpu=native"]
 
-# macOS Intel: 优化编译
-[target.x86_64-apple-darwin]
-rustflags = ["-C", "target-cpu=native"]
+# macOS Intel: 默认配置
+# [target.x86_64-apple-darwin]
+# 移除 rustflags 以避免CI环境中的CPU特性检测问题
 
-# macOS ARM: 优化编译
-[target.aarch64-apple-darwin]
-rustflags = ["-C", "target-cpu=native"]
+# macOS ARM: 默认配置
+# [target.aarch64-apple-darwin]
+# 移除 rustflags 以避免CI环境中的CPU特性检测问题
 
 # Windows: 使用 rust-lld
 [target.x86_64-pc-windows-msvc]

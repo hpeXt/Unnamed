@@ -1,0 +1,90 @@
+# 自定义应用命令权限定义
+
+# 容器管理权限
+[[permission]]
+identifier = "allow-create-plugin-container"
+description = "允许创建插件容器"
+commands.allow = ["create_plugin_container"]
+
+[[permission]]
+identifier = "allow-remove-plugin-container"
+description = "允许删除插件容器"
+commands.allow = ["remove_plugin_container"]
+
+[[permission]]
+identifier = "allow-list-containers"
+description = "允许列出所有容器"
+commands.allow = ["list_containers"]
+
+# 插件创建权限
+[[permission]]
+identifier = "allow-create-plugin-from-template"
+description = "允许从模板创建插件"
+commands.allow = ["create_plugin_from_template"]
+
+# 布局管理权限
+[[permission]]
+identifier = "allow-layout-management"
+description = "允许管理布局"
+commands.allow = ["save_layout", "list_layouts", "apply_layout"]
+
+# 插件管理权限
+[[permission]]
+identifier = "allow-plugin-management"
+description = "允许管理插件"
+commands.allow = ["get_plugins", "reload_plugins"]
+
+# 插件通信权限
+[[permission]]
+identifier = "allow-plugin-communication"
+description = "允许与插件通信"
+commands.allow = ["send_to_plugin", "subscribe_data", "unsubscribe_data"]
+
+# UI 插件管理权限
+[[permission]]
+identifier = "allow-ui-plugin-management"
+description = "允许管理 UI 插件"
+commands.allow = ["get_ui_subscriptions", "unregister_ui_plugin"]
+
+# 应用状态权限
+[[permission]]
+identifier = "allow-app-status"
+description = "允许查询应用状态"
+commands.allow = ["is_app_ready"]
+
+# 内联组件管理权限
+[[permission]]
+identifier = "allow-inline-widget-management"
+description = "允许管理内联组件"
+commands.allow = ["create_inline_widget", "remove_inline_widget", "list_inline_widgets", "update_inline_widget"]
+
+# 插件日志权限
+[[permission]]
+identifier = "allow-plugin-logs"
+description = "允许管理插件日志"
+commands.allow = ["get_plugin_logs", "clear_plugin_logs"]
+
+# 系统监控权限
+[[permission]]
+identifier = "allow-system-monitoring"
+description = "允许系统监控"
+commands.allow = ["get_system_stats", "get_processes", "start_system_monitoring"]
+
+# 默认权限集合
+[[set]]
+identifier = "default"
+description = "默认权限集合，包含所有应用命令"
+permissions = [
+    "allow-create-plugin-container",
+    "allow-remove-plugin-container",
+    "allow-list-containers",
+    "allow-create-plugin-from-template",
+    "allow-layout-management",
+    "allow-plugin-management",
+    "allow-plugin-communication",
+    "allow-ui-plugin-management",
+    "allow-app-status",
+    "allow-inline-widget-management",
+    "allow-plugin-logs",
+    "allow-system-monitoring"
+]

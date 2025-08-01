@@ -26,44 +26,7 @@
     ],
     "security": {
       "csp": null,
-      "capabilities": [
-        {
-          "identifier": "app-commands",
-          "description": "Allow all app custom commands",
-          "windows": ["*"],
-          "permissions": [
-            {
-              "identifier": "allow-app-commands",
-              "allow": [
-                "create_plugin_container",
-                "remove_plugin_container",
-                "list_containers",
-                "create_plugin_from_template",
-                "apply_layout",
-                "save_layout",
-                "list_layouts",
-                "get_plugins",
-                "send_to_plugin",
-                "subscribe_data",
-                "unsubscribe_data",
-                "reload_plugins",
-                "get_ui_subscriptions",
-                "unregister_ui_plugin",
-                "is_app_ready",
-                "create_inline_widget",
-                "remove_inline_widget",
-                "list_inline_widgets",
-                "update_inline_widget",
-                "get_plugin_logs",
-                "clear_plugin_logs",
-                "get_system_stats",
-                "get_processes",
-                "start_system_monitoring"
-              ]
-            }
-          ]
-        }
-      ]
+      "capabilities": ["default"]
     }
   },
   "bundle": {
