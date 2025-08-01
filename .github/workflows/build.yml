@@ -76,6 +76,7 @@ jobs:
       uses: tauri-apps/tauri-action@v0
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        DATABASE_URL: sqlite:data.db
       with:
         tagName: ${{ github.ref_name }}
         releaseName: 'Minimal Kernel v__VERSION__'

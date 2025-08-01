@@ -40,17 +40,21 @@ jobs:
           target/
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
     
-    - name: Check formatting
-      run: cargo fmt --all -- --check
-    
-    - name: Run clippy
-      run: cargo clippy --all-targets --all-features -- -D warnings
-    
     - name: Initialize database
       run: |
         cargo install sqlx-cli --no-default-features --features sqlite
         sqlx database create
         sqlx migrate run
+      env:
+        DATABASE_URL: sqlite:data.db
+    
+    - name: Check formatting
+      run: cargo fmt --all -- --check
+      env:
+        DATABASE_URL: sqlite:data.db
+    
+    - name: Run clippy
+      run: cargo clippy --all-targets --all-features -- -D warnings
       env:
         DATABASE_URL: sqlite:data.db
     
@@ -63,6 +67,8 @@ jobs:
     
     - name: Build
       run: cargo build --verbose
+      env:
+        DATABASE_URL: sqlite:data.db
     
     - name: Build plugins
       run: |
