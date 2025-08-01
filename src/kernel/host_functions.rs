@@ -1,15 +1,17 @@
 //! 主机函数定义
-//! 
+//!
 //! 提供给插件调用的函数
 
-use extism::*;
-use tokio::sync::mpsc;
+use crate::identity::IdentityManager;
 use crate::kernel::message::Message;
 use crate::kernel::message_bus::MessageBusHandle;
+use crate::log_collector;
 use crate::storage::Storage;
-use crate::identity::IdentityManager;
-use std::sync::{Arc, Mutex};
+use extism::*;
 use std::collections::BTreeMap;
+use std::sync::{Arc, Mutex};
+use tokio::sync::mpsc;
+use tracing;
 
 /// 共享应用状态
 #[derive(Clone)]
@@ -22,10 +24,10 @@ pub struct HostContext {
 
 impl HostContext {
     pub fn new(
-        storage: Option<Arc<Storage>>, 
+        storage: Option<Arc<Storage>>,
         msg_sender: mpsc::Sender<Message>,
         identity: Option<Arc<IdentityManager>>,
-        message_bus: Option<MessageBusHandle>
+        message_bus: Option<MessageBusHandle>,
     ) -> Self {
         Self {
             storage,
@@ -44,19 +46,19 @@ host_fn!(store_data(user_data: ContextStore; plugin_id: String, key: String, val
     let store = user_data.get()?;
     let store = store.lock().unwrap();
     let inner_store = store.lock().unwrap();
-    
+
     if let Some(ctx_arc) = inner_store.get("context") {
         let ctx = ctx_arc.lock().unwrap();
         if let Some(storage) = &ctx.storage {
             // 解析 JSON 值
             let json_value: serde_json::Value = serde_json::from_str(&value)?;
-            
+
             // 使用 block_on 在同步上下文中执行异步操作
             let runtime = tokio::runtime::Handle::current();
             runtime.block_on(async {
                 storage.store_data(&plugin_id, &key, &json_value).await
             })?;
-            
+
             Ok("success".to_string())
         } else {
             Err(extism::Error::msg("Storage not initialized"))
@@ -70,7 +72,7 @@ host_fn!(get_data(user_data: ContextStore; plugin_id: String, key: String) -> St
     let store = user_data.get()?;
     let store = store.lock().unwrap();
     let inner_store = store.lock().unwrap();
-    
+
     if let Some(ctx_arc) = inner_store.get("context") {
         let ctx = ctx_arc.lock().unwrap();
         if let Some(storage) = &ctx.storage {
@@ -78,13 +80,13 @@ host_fn!(get_data(user_data: ContextStore; plugin_id: String, key: String) -> St
             let value = runtime.block_on(async {
                 storage.get_data(&plugin_id, &key).await
             })?;
-            
+
             // 将结果序列化为 JSON
             let result = serde_json::json!({
                 "success": true,
                 "value": value
             });
-            
+
             Ok(result.to_string())
         } else {
             Err(extism::Error::msg("Storage not initialized"))
@@ -98,7 +100,7 @@ host_fn!(delete_data(user_data: ContextStore; plugin_id: String, key: String) ->
     let store = user_data.get()?;
     let store = store.lock().unwrap();
     let inner_store = store.lock().unwrap();
-    
+
     if let Some(ctx_arc) = inner_store.get("context") {
         let ctx = ctx_arc.lock().unwrap();
         if let Some(storage) = &ctx.storage {
@@ -106,13 +108,13 @@ host_fn!(delete_data(user_data: ContextStore; plugin_id: String, key: String) ->
             let deleted = runtime.block_on(async {
                 storage.delete_data(&plugin_id, &key).await
             })?;
-            
+
             // 将结果序列化为 JSON
             let result = serde_json::json!({
                 "success": true,
                 "deleted": deleted
             });
-            
+
             Ok(result.to_string())
         } else {
             Err(extism::Error::msg("Storage not initialized"))
@@ -126,7 +128,7 @@ host_fn!(list_keys(user_data: ContextStore; plugin_id: String) -> String {
     let store = user_data.get()?;
     let store = store.lock().unwrap();
     let inner_store = store.lock().unwrap();
-    
+
     if let Some(ctx_arc) = inner_store.get("context") {
         let ctx = ctx_arc.lock().unwrap();
         if let Some(storage) = &ctx.storage {
@@ -134,13 +136,13 @@ host_fn!(list_keys(user_data: ContextStore; plugin_id: String) -> String {
             let keys = runtime.block_on(async {
                 storage.list_keys(&plugin_id).await
             })?;
-            
+
             // 将结果序列化为 JSON
             let result = serde_json::json!({
                 "success": true,
                 "keys": keys
             });
-            
+
             Ok(result.to_string())
         } else {
             Err(extism::Error::msg("Storage not initialized"))
@@ -154,18 +156,18 @@ host_fn!(send_message(user_data: ContextStore; from: String, to: String, payload
     let store = user_data.get()?;
     let store = store.lock().unwrap();
     let inner_store = store.lock().unwrap();
-    
+
     if let Some(ctx_arc) = inner_store.get("context") {
         let ctx = ctx_arc.lock().unwrap();
-        
+
         // 将 payload 转换为字节
         let payload_bytes = payload.into_bytes();
         let msg = Message::new(from, to, payload_bytes);
         let msg_id = msg.id.clone();
-        
+
         ctx.msg_sender.try_send(msg)
             .map_err(|e| extism::Error::msg(format!("Failed to send message: {}", e)))?;
-        
+
         Ok(msg_id)
     } else {
         Err(extism::Error::msg("Context not found"))
@@ -175,13 +177,15 @@ host_fn!(send_message(user_data: ContextStore; from: String, to: String, payload
 // 简单的日志函数（不需要用户数据）
 host_fn!(log_message(level: String, message: String) -> String {
     match level.as_str() {
-        "error" => eprintln!("[PLUGIN ERROR] {}", message),
-        "warn" => eprintln!("[PLUGIN WARN] {}", message),
-        "info" => println!("[PLUGIN INFO] {}", message),
-        "debug" => println!("[PLUGIN DEBUG] {}", message),
-        _ => println!("[PLUGIN] {}", message),
+        "error" => tracing::error!("[PLUGIN] {}", message),
+        "warn" => tracing::warn!("[PLUGIN] {}", message),
+        "info" => tracing::info!("[PLUGIN] {}", message),
+        "debug" => tracing::debug!("[PLUGIN] {}", message),
+        _ => tracing::trace!("[PLUGIN] {}", message),
     }
-    
+
+    log_collector::add_log(&level, &message);
+
     Ok("logged".to_string())
 });
 
@@ -190,7 +194,7 @@ host_fn!(sign_message(user_data: ContextStore; plugin_id: String, message: Strin
     let store = user_data.get()?;
     let store = store.lock().unwrap();
     let inner_store = store.lock().unwrap();
-    
+
     if let Some(ctx_arc) = inner_store.get("context") {
         let ctx = ctx_arc.lock().unwrap();
         if let Some(identity) = &ctx.identity {
@@ -198,15 +202,15 @@ host_fn!(sign_message(user_data: ContextStore; plugin_id: String, message: Strin
             let signature = runtime.block_on(async {
                 identity.sign_for_plugin(&plugin_id, message.as_bytes()).await
             })?;
-            
+
             // 将签名转换为十六进制字符串
             let signature_hex = hex::encode(&signature);
-            
+
             let result = serde_json::json!({
                 "success": true,
                 "signature": signature_hex
             });
-            
+
             Ok(result.to_string())
         } else {
             Err(extism::Error::msg("Identity manager not initialized"))
@@ -220,24 +224,24 @@ host_fn!(verify_signature(user_data: ContextStore; plugin_id: String, message: S
     let store = user_data.get()?;
     let store = store.lock().unwrap();
     let inner_store = store.lock().unwrap();
-    
+
     if let Some(ctx_arc) = inner_store.get("context") {
         let ctx = ctx_arc.lock().unwrap();
         if let Some(identity) = &ctx.identity {
             // 将十六进制签名转换为字节
             let signature_bytes = hex::decode(&signature)
                 .map_err(|e| extism::Error::msg(format!("Invalid signature hex: {}", e)))?;
-            
+
             let runtime = tokio::runtime::Handle::current();
             let is_valid = runtime.block_on(async {
                 identity.verify_plugin_signature(&plugin_id, message.as_bytes(), &signature_bytes).await
             })?;
-            
+
             let result = serde_json::json!({
                 "success": true,
                 "valid": is_valid
             });
-            
+
             Ok(result.to_string())
         } else {
             Err(extism::Error::msg("Identity manager not initialized"))
@@ -251,7 +255,7 @@ host_fn!(get_plugin_address(user_data: ContextStore; plugin_id: String) -> Strin
     let store = user_data.get()?;
     let store = store.lock().unwrap();
     let inner_store = store.lock().unwrap();
-    
+
     if let Some(ctx_arc) = inner_store.get("context") {
         let ctx = ctx_arc.lock().unwrap();
         if let Some(identity) = &ctx.identity {
@@ -259,12 +263,12 @@ host_fn!(get_plugin_address(user_data: ContextStore; plugin_id: String) -> Strin
             let address = runtime.block_on(async {
                 identity.get_plugin_address(&plugin_id).await
             })?;
-            
+
             let result = serde_json::json!({
                 "success": true,
                 "address": address.to_string()
             });
-            
+
             Ok(result.to_string())
         } else {
             Err(extism::Error::msg("Identity manager not initialized"))
@@ -278,12 +282,12 @@ host_fn!(subscribe_topic(user_data: ContextStore; plugin_id: String, topic: Stri
     let store = user_data.get()?;
     let store = store.lock().unwrap();
     let inner_store = store.lock().unwrap();
-    
+
     if let Some(ctx_arc) = inner_store.get("context") {
         let ctx = ctx_arc.lock().unwrap();
         if let Some(bus) = &ctx.message_bus {
             let success = bus.subscribe_topic(&plugin_id, &topic);
-            
+
             let result = serde_json::json!({
                 "success": success,
                 "plugin_id": plugin_id,
@@ -294,7 +298,7 @@ host_fn!(subscribe_topic(user_data: ContextStore; plugin_id: String, topic: Stri
                     "订阅失败，可能已经订阅过此主题"
                 }
             });
-            
+
             Ok(result.to_string())
         } else {
             Err(extism::Error::msg("Message bus not initialized"))
@@ -308,12 +312,12 @@ host_fn!(unsubscribe_topic(user_data: ContextStore; plugin_id: String, topic: St
     let store = user_data.get()?;
     let store = store.lock().unwrap();
     let inner_store = store.lock().unwrap();
-    
+
     if let Some(ctx_arc) = inner_store.get("context") {
         let ctx = ctx_arc.lock().unwrap();
         if let Some(bus) = &ctx.message_bus {
             let success = bus.unsubscribe_topic(&plugin_id, &topic);
-            
+
             let result = serde_json::json!({
                 "success": success,
                 "plugin_id": plugin_id,
@@ -324,7 +328,7 @@ host_fn!(unsubscribe_topic(user_data: ContextStore; plugin_id: String, topic: St
                     "取消订阅失败，可能未订阅此主题"
                 }
             });
-            
+
             Ok(result.to_string())
         } else {
             Err(extism::Error::msg("Message bus not initialized"))
@@ -338,26 +342,26 @@ host_fn!(publish_message(user_data: ContextStore; plugin_id: String, topic: Stri
     let store = user_data.get()?;
     let store = store.lock().unwrap();
     let inner_store = store.lock().unwrap();
-    
+
     if let Some(ctx_arc) = inner_store.get("context") {
         let ctx = ctx_arc.lock().unwrap();
-        
+
         // 创建主题消息
         let payload_bytes = payload.into_bytes();
         let msg = Message::new_topic(plugin_id.clone(), topic.clone(), payload_bytes);
         let msg_id = msg.id.clone();
-        
+
         // 发送消息
         ctx.msg_sender.try_send(msg)
             .map_err(|e| extism::Error::msg(format!("Failed to send topic message: {}", e)))?;
-        
+
         let result = serde_json::json!({
             "success": true,
             "message_id": msg_id,
             "topic": topic,
             "from": plugin_id
         });
-        
+
         Ok(result.to_string())
     } else {
         Err(extism::Error::msg("Context not found"))
@@ -370,7 +374,7 @@ host_fn!(get_timestamp_host() -> String {
         .duration_since(std::time::UNIX_EPOCH)
         .map_err(|e| extism::Error::msg(format!("Time error: {}", e)))?
         .as_secs();
-    
+
     Ok(timestamp.to_string())
 });
 
@@ -379,7 +383,7 @@ host_fn!(get_timestamp_millis_host() -> String {
         .duration_since(std::time::UNIX_EPOCH)
         .map_err(|e| extism::Error::msg(format!("Time error: {}", e)))?
         .as_millis() as u64;
-    
+
     Ok(timestamp.to_string())
 });
 
@@ -497,4 +501,3 @@ pub fn build_plugin_with_host_functions(
         )
         .build()
 }
-

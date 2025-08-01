@@ -54,6 +54,8 @@
                 "remove_inline_widget",
                 "list_inline_widgets",
                 "update_inline_widget",
+                "get_plugin_logs",
+                "clear_plugin_logs",
                 "get_system_stats",
                 "get_processes",
                 "start_system_monitoring"
@@ -66,7 +68,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["app", "dmg"],
+    "targets": ["app", "dmg", "msi", "deb", "appimage"],
     "category": "DeveloperTool",
     "copyright": "Copyright © 2025 Minimal Kernel Team",
     "shortDescription": "插件驱动的数据分析仪表板",

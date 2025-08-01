@@ -1,20 +1,22 @@
 // Prevents additional console window on Windows in release
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod container;
-mod bridge;
-mod system_monitor;
 mod app_state;
+mod bridge;
+mod container;
 mod plugin_creator;
+mod system_monitor;
 
-use container::{ContainerManager, RenderMode, ContainerPosition, ContainerSize, GridPosition, GridSize};
+use app_state::{is_app_ready, AppState};
 use bridge::KernelBridge;
-use system_monitor::SystemMonitor;
-use app_state::{AppState, is_app_ready};
-use plugin_creator::{PluginConfig, CreatePluginResult};
-use tauri::{State, Manager};
-use std::sync::Arc;
+use container::{
+    ContainerManager, ContainerPosition, ContainerSize, GridPosition, GridSize, RenderMode,
+};
+use plugin_creator::{CreatePluginResult, PluginConfig};
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+use system_monitor::SystemMonitor;
+use tauri::{Manager, State};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct GridLayout {
@@ -53,9 +55,11 @@ async fn create_plugin_container(
         "native" => RenderMode::Native,
         _ => return Err(format!("Invalid render mode: {}", render_mode)),
     };
-    
+
     tracing::info!("Creating container for plugin: {}", plugin_id);
-    let result = container_manager.create_container(&plugin_id, mode, position, size).await;
+    let result = container_manager
+        .create_container(&plugin_id, mode, position, size)
+        .await;
     match result {
         Ok(container_id) => {
             tracing::info!("Container created successfully: {}", container_id);
@@ -74,7 +78,8 @@ async fn remove_plugin_container(
     container_id: String,
     container_manager: State<'_, Arc<ContainerManager>>,
 ) -> Result<(), String> {
-    container_manager.remove_container(&container_id)
+    container_manager
+        .remove_container(&container_id)
         .await
         .map_err(|e| e.to_string())
 }
@@ -89,9 +94,7 @@ async fn list_containers(
 
 // Tauri 命令：从模板创建插件
 #[tauri::command]
-async fn create_plugin_from_template(
-    config: PluginConfig,
-) -> Result<CreatePluginResult, String> {
+async fn create_plugin_from_template(config: PluginConfig) -> Result<CreatePluginResult, String> {
     plugin_creator::create_plugin_from_template(config)
         .await
         .map_err(|e| format!("创建插件失败: {}", e))
@@ -106,7 +109,7 @@ async fn save_layout(
 ) -> Result<String, String> {
     // 获取当前所有内联组件
     let inline_widgets = container_manager.list_inline_widgets().await;
-    
+
     // 转换为布局请求格式
     let mut widgets = Vec::new();
     for widget in inline_widgets {
@@ -120,9 +123,10 @@ async fn save_layout(
             config: Some(widget.config),
         });
     }
-    
+
     // 保存布局
-    kernel_bridge.save_layout(name, widgets)
+    kernel_bridge
+        .save_layout(name, widgets)
         .await
         .map_err(|e| e.to_string())
 }
@@ -132,7 +136,8 @@ async fn save_layout(
 async fn list_layouts(
     kernel_bridge: State<'_, Arc<KernelBridge>>,
 ) -> Result<Vec<serde_json::Value>, String> {
-    kernel_bridge.list_layouts()
+    kernel_bridge
+        .list_layouts()
         .await
         .map_err(|e| e.to_string())
 }
@@ -145,41 +150,47 @@ async fn apply_layout(
     container_manager: State<'_, Arc<ContainerManager>>,
 ) -> Result<(), String> {
     // 获取布局详情
-    let layout_widgets = kernel_bridge.get_layout_widgets(layout_id)
+    let layout_widgets = kernel_bridge
+        .get_layout_widgets(layout_id)
         .await
         .map_err(|e| e.to_string())?;
-    
+
     // 清除现有内联组件
     let current_widgets = container_manager.list_inline_widgets().await;
     for widget in current_widgets {
-        container_manager.remove_inline_widget(&widget.id).await.ok();
+        container_manager
+            .remove_inline_widget(&widget.id)
+            .await
+            .ok();
     }
-    
+
     // 创建新组件
     for widget in layout_widgets {
-        container_manager.create_inline_widget(
-            &widget.widget_type,
-            GridPosition {
-                row: widget.position_row as u32,
-                col: widget.position_col as u32,
-            },
-            GridSize {
-                row_span: widget.size_row_span as u32,
-                col_span: widget.size_col_span as u32,
-            },
-            widget.config.unwrap_or_default()
-        ).await.ok();
+        container_manager
+            .create_inline_widget(
+                &widget.widget_type,
+                GridPosition {
+                    row: widget.position_row as u32,
+                    col: widget.position_col as u32,
+                },
+                GridSize {
+                    row_span: widget.size_row_span as u32,
+                    col_span: widget.size_col_span as u32,
+                },
+                widget.config.unwrap_or_default(),
+            )
+            .await
+            .ok();
     }
-    
+
     Ok(())
 }
 
 // Tauri 命令：获取插件列表
 #[tauri::command]
-async fn get_plugins(
-    kernel_bridge: State<'_, Arc<KernelBridge>>,
-) -> Result<Vec<String>, String> {
-    kernel_bridge.get_ui_plugins()
+async fn get_plugins(kernel_bridge: State<'_, Arc<KernelBridge>>) -> Result<Vec<String>, String> {
+    kernel_bridge
+        .get_ui_plugins()
         .await
         .map_err(|e| e.to_string())
 }
@@ -191,7 +202,8 @@ async fn send_to_plugin(
     message: serde_json::Value,
     kernel_bridge: State<'_, Arc<KernelBridge>>,
 ) -> Result<(), String> {
-    kernel_bridge.send_message(&plugin_id, message)
+    kernel_bridge
+        .send_message(&plugin_id, message)
         .await
         .map_err(|e| e.to_string())
 }
@@ -203,7 +215,8 @@ async fn subscribe_data(
     plugin_id: String,
     kernel_bridge: State<'_, Arc<KernelBridge>>,
 ) -> Result<(), String> {
-    kernel_bridge.subscribe(&topic, &plugin_id)
+    kernel_bridge
+        .subscribe(&topic, &plugin_id)
         .await
         .map_err(|e| e.to_string())
 }
@@ -214,7 +227,8 @@ async fn reload_plugins(
     app_handle: tauri::AppHandle,
     kernel_bridge: State<'_, Arc<KernelBridge>>,
 ) -> Result<Vec<String>, String> {
-    kernel_bridge.load_plugins(app_handle)
+    kernel_bridge
+        .load_plugins(app_handle)
         .await
         .map_err(|e| e.to_string())
 }
@@ -226,7 +240,8 @@ async fn unsubscribe_data(
     plugin_id: String,
     kernel_bridge: State<'_, Arc<KernelBridge>>,
 ) -> Result<(), String> {
-    kernel_bridge.unsubscribe(&topic, &plugin_id)
+    kernel_bridge
+        .unsubscribe(&topic, &plugin_id)
         .await
         .map_err(|e| e.to_string())
 }
@@ -236,7 +251,8 @@ async fn unsubscribe_data(
 async fn get_ui_subscriptions(
     kernel_bridge: State<'_, Arc<KernelBridge>>,
 ) -> Result<Vec<bridge::UISubscription>, String> {
-    kernel_bridge.get_ui_subscriptions()
+    kernel_bridge
+        .get_ui_subscriptions()
         .await
         .map_err(|e| e.to_string())
 }
@@ -247,7 +263,8 @@ async fn unregister_ui_plugin(
     plugin_id: String,
     kernel_bridge: State<'_, Arc<KernelBridge>>,
 ) -> Result<(), String> {
-    kernel_bridge.unregister_ui_plugin(&plugin_id)
+    kernel_bridge
+        .unregister_ui_plugin(&plugin_id)
         .await
         .map_err(|e| e.to_string())
 }
@@ -261,7 +278,8 @@ async fn create_inline_widget(
     config: serde_json::Value,
     container_manager: State<'_, Arc<ContainerManager>>,
 ) -> Result<String, String> {
-    container_manager.create_inline_widget(&widget_type, position, size, config)
+    container_manager
+        .create_inline_widget(&widget_type, position, size, config)
         .await
         .map_err(|e| e.to_string())
 }
@@ -272,7 +290,8 @@ async fn remove_inline_widget(
     widget_id: String,
     container_manager: State<'_, Arc<ContainerManager>>,
 ) -> Result<(), String> {
-    container_manager.remove_inline_widget(&widget_id)
+    container_manager
+        .remove_inline_widget(&widget_id)
         .await
         .map_err(|e| e.to_string())
 }
@@ -292,16 +311,26 @@ async fn update_inline_widget(
     config: serde_json::Value,
     container_manager: State<'_, Arc<ContainerManager>>,
 ) -> Result<(), String> {
-    container_manager.update_inline_widget(&widget_id, config)
+    container_manager
+        .update_inline_widget(&widget_id, config)
         .await
         .map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+async fn get_plugin_logs() -> Result<Vec<minimal_kernel::log_collector::LogEntry>, String> {
+    Ok(minimal_kernel::log_collector::get_logs())
+}
+
+#[tauri::command]
+async fn clear_plugin_logs() -> Result<(), String> {
+    minimal_kernel::log_collector::clear_logs();
+    Ok(())
+}
+
 fn main() {
     // 初始化日志
-    tracing_subscriber::fmt()
-        .with_env_filter("debug")
-        .init();
+    tracing_subscriber::fmt().with_env_filter("debug").init();
 
     // 创建内核桥接
     let kernel_bridge = Arc::new(KernelBridge::new());
@@ -312,27 +341,29 @@ fn main() {
             // 获取 app handle 用于后续操作
             let app_handle = app.handle().clone();
             let app_handle_for_container = app.handle().clone();
-            
+
             // 创建应用状态
             let app_state = AppState::new();
             app.manage(app_state.clone());
-            
+
             // 创建容器管理器
             let container_manager = Arc::new(ContainerManager::new());
-            
+
             // 同步设置 app handle - 使用 block_on 确保立即完成
             let container_manager_clone = container_manager.clone();
             tauri::async_runtime::block_on(async move {
-                container_manager_clone.set_app_handle(app_handle_for_container).await;
+                container_manager_clone
+                    .set_app_handle(app_handle_for_container)
+                    .await;
             });
-            
+
             // 将容器管理器放入应用状态
             app.manage(container_manager);
-            
+
             // 创建系统监控器
             let system_monitor = Arc::new(SystemMonitor::new(app_handle.clone()));
             app.manage(system_monitor.clone());
-            
+
             // 初始化内核
             let kernel_bridge_clone = kernel_bridge_for_setup.clone();
             let app_handle_for_listener = app_handle.clone();
@@ -341,30 +372,35 @@ fn main() {
                 match kernel_bridge_clone.initialize().await {
                     Ok(_) => {
                         tracing::info!("Kernel initialized successfully");
-                        
+
                         // 加载插件
                         match kernel_bridge_clone.load_plugins(app_handle).await {
                             Ok(plugins) => {
                                 tracing::info!("Loaded {} plugins: {:?}", plugins.len(), plugins);
-                            },
+                            }
                             Err(e) => {
                                 tracing::error!("Failed to load plugins: {}", e);
                             }
                         }
-                        
+
                         // 启动消息监听器
-                        match kernel_bridge_clone.start_message_listener(app_handle_for_listener).await {
+                        match kernel_bridge_clone
+                            .start_message_listener(app_handle_for_listener)
+                            .await
+                        {
                             Ok(_) => {
                                 tracing::info!("Message listener started successfully");
-                            },
+                            }
                             Err(e) => {
                                 tracing::error!("Failed to start message listener: {}", e);
                             }
                         }
-                        
+
+                        plugin_watcher::init(app_handle.clone(), kernel_bridge_clone.clone());
+
                         // 标记应用已就绪
                         app_state_for_init.set_ready();
-                    },
+                    }
                     Err(e) => {
                         tracing::error!("Failed to initialize kernel: {}", e);
                         tracing::error!("Note: The app will continue without kernel functionality");
@@ -373,7 +409,7 @@ fn main() {
                     }
                 }
             });
-            
+
             Ok(())
         })
         .manage(kernel_bridge)
