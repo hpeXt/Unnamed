@@ -6,6 +6,7 @@
 - **问题**: SQLx 默认将 SQLite INTEGER 映射到 Rust i64，但代码中使用了 i32
 - **解决**: 统一所有整数字段为 i64，保持类型一致性
 - **理由**: 符合"简单优于完美"的项目哲学
+- **状态**: ✅ 已完成
 
 ### 2. SQLX_OFFLINE 模式配置
 - **问题**: CI 环境无法连接数据库进行编译时查询验证
@@ -17,61 +18,36 @@
 - **解决**: 使用二进制下载方式，添加 fallback 机制
 - **状态**: ✅ 已完成
 
-## 待解决的问题
-
-### 1. DateTime 类型转换问题
+### 4. DateTime 类型转换问题 
 - **问题**: SQLite TIMESTAMP 与 Rust DateTime<Utc> 类型不匹配
 - **错误**: `the trait bound 'DateTime<Utc>: From<Option<NaiveDateTime>>' is not satisfied`
-- **建议解决方案**:
-  1. 使用 SQLx 的类型注解：`created_at as "created_at: DateTime<Utc>"`
-  2. 或者使用自定义类型转换
-  3. 或者生成完整的 sqlx-data.json 文件
+- **最终解决**: 移除 SQLx 编译时宏，改用运行时查询
+- **实施细节**:
+  1. 将所有 `sqlx::query_as!()` 宏替换为 `sqlx::query()`
+  2. 手动映射每个字段
+  3. 添加辅助函数 `naive_to_utc()` 处理时间转换
+  4. 删除 `sqlx-data.json` 文件
+- **状态**: ✅ 已完成
 
-### 2. 生成正确的 SQLx 元数据
-需要在本地环境执行：
-```bash
-# 确保数据库存在
-./scripts/init-database.sh
+## 关键解决方案总结
 
-# 生成元数据
-cargo sqlx prepare
+**CI/CD 编译失败的根本原因**：SQLx 编译时宏要求在编译时连接数据库进行查询验证，但 CI 环境中没有数据库。
 
-# 提交生成的文件
-git add .sqlx/ sqlx-data.json
-git commit -m "chore: 更新 SQLx 元数据文件"
-```
+**最佳解决方案**：移除 SQLx 编译时宏，使用运行时查询。这个方案：
+- 完全消除了编译时对数据库的依赖
+- 保持了代码的灵活性和可维护性
+- 符合项目"简单优于完美"的哲学
+- 不需要维护额外的元数据文件
 
-## 临时解决方案
+## 实施步骤记录
 
-如果 CI 仍然失败，可以考虑：
+1. **识别问题**：SQLite 的 TIMESTAMP 类型映射到 `Option<NaiveDateTime>`，而代码使用 `DateTime<Utc>`
+2. **移除编译时宏**：将 `sqlx::query_as!()` 替换为 `sqlx::query()`
+3. **手动映射字段**：使用 `row.get()` 方法获取每个字段
+4. **处理时间转换**：添加 `naive_to_utc()` 辅助函数
+5. **清理文件**：删除不再需要的 `sqlx-data.json`
 
-1. **跳过部分测试**
-   ```yaml
-   - name: Run tests
-     run: cargo test --all-features || true
-     continue-on-error: true
-   ```
+## 未来建议
 
-2. **使用特性标志**
-   ```toml
-   [features]
-   ci = []
-   ```
-   然后在 CI 中使用 `--no-default-features --features ci`
-
-3. **分离存储层测试**
-   将需要数据库的测试单独运行
-
-## 长期改进建议
-
-1. **考虑使用 sea-orm 或 diesel**
-   - 更成熟的 ORM 解决方案
-   - 更好的类型映射支持
-
-2. **使用 Docker 进行 CI 测试**
-   - 提供一致的数据库环境
-   - 避免离线模式的复杂性
-
-3. **简化数据模型**
-   - 减少不必要的时间戳字段
-   - 使用更简单的类型
+- 如果需要更强的类型安全，可以考虑使用 sea-orm 或 diesel
+- 目前的解决方案简单有效，符合最小化内核的设计理念
