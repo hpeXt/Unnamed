@@ -4,6 +4,10 @@
 import { invoke, isTauri, getVersion, listen, PluginMessageBus } from './tauri-api.js';
 // 导入引导管理器
 import { onboarding } from './onboarding/onboarding.js';
+// 导入插件创建器
+import { pluginCreator } from './plugin-creator/plugin-creator.js';
+// 导入插件选择器
+import { pluginSelector } from './plugin-selector/plugin-selector.js';
 
 console.log('Minimal Kernel Dashboard - Loading (Module)...');
 
@@ -48,9 +52,15 @@ function setupBasicListeners() {
                         return;
                     }
                     
-                    // 显示选择对话框
-                    const choice = await showWidgetTypeDialog();
+                    // 显示优雅的选择界面
+                    const choice = await pluginSelector.show();
                     if (!choice) return;
+                    
+                    // 如果选择创建新插件
+                    if (choice.type === 'create') {
+                        pluginCreator.show();
+                        return;
+                    }
                     
                     if (choice.type === 'webview') {
                         // 创建独立窗口插件
@@ -185,33 +195,6 @@ window.showPreferences = function() {
     }
 };
 
-// 显示组件类型选择对话框
-async function showWidgetTypeDialog() {
-    return new Promise((resolve) => {
-        // 简单的选择对话框
-        const types = [
-            { type: 'webview', pluginId: 'system-monitor', name: '系统监控（独立窗口）' },
-            { type: 'inline', widgetType: 'heart-rate', name: '心率监控（内联）' },
-            { type: 'inline', widgetType: 'cpu-usage', name: 'CPU 使用率（内联）' },
-            { type: 'inline', widgetType: 'memory-usage', name: '内存使用率（内联）' }
-        ];
-        
-        const choice = prompt(
-            '选择要添加的组件类型：\n\n' +
-            types.map((t, i) => `${i + 1}. ${t.name}`).join('\n') +
-            '\n\n请输入数字（1-' + types.length + '）：'
-        );
-        
-        if (choice && !isNaN(choice)) {
-            const index = parseInt(choice) - 1;
-            if (index >= 0 && index < types.length) {
-                resolve(types[index]);
-                return;
-            }
-        }
-        resolve(null);
-    });
-}
 
 // 更新内联组件显示
 async function updateInlineWidgets() {
