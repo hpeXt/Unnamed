@@ -1,0 +1,45 @@
+name: 'Cache Cargo'
+description: 'Optimized cargo caching for Rust projects'
+
+inputs:
+  cache-name:
+    description: 'Cache name prefix'
+    required: false
+    default: 'cargo'
+  workspaces:
+    description: 'Cargo workspaces to cache'
+    required: false
+    default: '. -> target'
+
+runs:
+  using: 'composite'
+  steps:
+    # 分离缓存以提高命中率
+    - name: Cache cargo registry
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+        key: ${{ runner.os }}-${{ inputs.cache-name }}-registry-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ inputs.cache-name }}-registry-
+    
+    # 缓存cargo bin（工具）
+    - name: Cache cargo binaries
+      uses: actions/cache@v3
+      with:
+        path: ~/.cargo/bin/
+        key: ${{ runner.os }}-cargo-bin-${{ hashFiles('.github/workflows/*.yml') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-bin-
+    
+    # 使用swatinem/rust-cache处理target缓存
+    - name: Cache build artifacts
+      uses: swatinem/rust-cache@v2
+      with:
+        workspaces: ${{ inputs.workspaces }}
+        cache-targets: true
+        cache-on-failure: true
+        cache-all-crates: true

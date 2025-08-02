@@ -4,58 +4,59 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g. 1.0.0)'
+        required: true
 
 permissions:
   contents: write
 
+env:
+  CARGO_TERM_COLOR: always
+  SQLX_OFFLINE: true
+  DATABASE_URL: sqlite:data.db
+
 jobs:
-  create-release:
+  # 预检查 - 确保代码质量
+  pre-check:
+    name: Pre-release Check
     runs-on: ubuntu-latest
-    outputs:
-      release_id: ${{ steps.create-release.outputs.id }}
-      upload_url: ${{ steps.create-release.outputs.upload_url }}
     
     steps:
     - uses: actions/checkout@v4
     
-    - name: Create Release
-      id: create-release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
       with:
-        tag_name: ${{ github.ref_name }}
-        release_name: Minimal Kernel ${{ github.ref_name }}
-        draft: false
-        prerelease: false
-        body: |
-          ## 🎉 Minimal Kernel ${{ github.ref_name }}
-          
-          ### 📦 下载安装
-          - **macOS**: `Minimal.Kernel.Dashboard_${{ github.ref_name }}_x64.dmg`
-          - **Windows**: `Minimal.Kernel.Dashboard_${{ github.ref_name }}_x64.msi`
-          - **Linux**: `minimal-kernel-dashboard_${{ github.ref_name }}_amd64.deb`
-          
-          ### 📝 更新内容
-          请查看 [CHANGELOG](https://github.com/hpeXt/Unnamed/blob/main/CHANGELOG.md) 了解详细更新内容。
-          
-          ### 🚀 快速开始
-          1. 下载对应平台的安装包
-          2. 按照 [安装指南](https://github.com/hpeXt/Unnamed/blob/main/INSTALL.md) 进行安装
-          3. 启动应用，开始使用！
+        components: rustfmt, clippy
+    
+    - name: Check formatting
+      run: cargo fmt -- --check
+    
+    - name: Run clippy
+      run: cargo clippy -- -D warnings
 
+  # 构建各平台包
   build-tauri:
-    needs: create-release
+    needs: pre-check
     strategy:
       fail-fast: false
       matrix:
         include:
           - platform: 'macos-latest'
+            target: 'universal-apple-darwin'
             args: '--target universal-apple-darwin'
+            bundles: 'dmg'
           - platform: 'ubuntu-22.04'
+            target: 'x86_64-unknown-linux-gnu'
             args: ''
+            bundles: 'deb,appimage'
           - platform: 'windows-latest'
+            target: 'x86_64-pc-windows-msvc'
             args: ''
+            bundles: 'msi,nsis'
 
     runs-on: ${{ matrix.platform }}
     
@@ -65,19 +66,24 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
     
-    - name: Install Rust stable
+    - name: Install Rust
       uses: dtolnay/rust-toolchain@stable
       with:
-        targets: wasm32-unknown-unknown
+        targets: wasm32-unknown-unknown,${{ matrix.target }}
     
     - name: Rust cache
       uses: swatinem/rust-cache@v2
       with:
-        workspaces: './src-tauri -> target'
+        workspaces: |
+          . -> target
+          ./src-tauri -> target
+        key: ${{ matrix.platform }}-release
     
-    - name: Install dependencies (Ubuntu only)
+    - name: Install dependencies (Ubuntu)
       if: matrix.platform == 'ubuntu-22.04'
       run: |
         sudo apt-get update
@@ -91,15 +97,58 @@ jobs:
           libayatana-appindicator3-dev \
           librsvg2-dev
     
+    - name: Build frontend
+      run: |
+        cd frontend
+        npm ci
+        npm run build
+    
     - name: Build plugins
       run: |
-        cd plugins/hello && cargo build --target wasm32-unknown-unknown --release && cd ../..
-        cd plugins/echo && cargo build --target wasm32-unknown-unknown --release && cd ../..
+        for plugin in plugins/*/; do
+          if [ -f "$plugin/Cargo.toml" ] || [ -f "$plugin\\Cargo.toml" ]; then
+            echo "Building plugin: $(basename $plugin)"
+            cd "$plugin"
+            cargo build --target wasm32-unknown-unknown --release
+            cd ../..
+          fi
+        done
+      shell: bash
     
     - name: Build Tauri App
       uses: tauri-apps/tauri-action@v0
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+        TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
       with:
-        releaseId: ${{ needs.create-release.outputs.release_id }}
+        tagName: ${{ github.ref_name || format('v{0}', github.event.inputs.version) }}
+        releaseName: 'Minimal Kernel ${{ github.ref_name || github.event.inputs.version }}'
+        releaseBody: |
+          ## 🎉 Minimal Kernel ${{ github.ref_name || github.event.inputs.version }}
+          
+          ### 📦 下载安装
+          - **macOS**: `.dmg` 文件 (支持 Intel 和 Apple Silicon)
+          - **Windows**: `.msi` 或 `.exe` 安装包
+          - **Linux**: `.deb` (Ubuntu/Debian) 或 `.AppImage` (通用)
+          
+          ### 🔐 签名验证
+          所有安装包均已签名，请验证签名以确保安全。
+          
+          ### 📝 更新内容
+          查看完整更新日志请访问 [CHANGELOG](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)
+          
+          ### 🚀 快速开始
+          1. 下载对应平台的安装包
+          2. 验证签名（可选但推荐）
+          3. 按照系统提示完成安装
+          4. 启动应用，开始使用！
+          
+          ---
+          _构建时间: ${{ github.event.head_commit.timestamp || github.event.repository.updated_at }}_
+        releaseDraft: true
+        prerelease: ${{ contains(github.ref_name, 'beta') || contains(github.ref_name, 'alpha') }}
         args: ${{ matrix.args }}
+        includeDebug: false
+        includeRelease: true
+        includeUpdaterJson: true
