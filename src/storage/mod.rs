@@ -435,7 +435,7 @@ mod tests {
             // 本地环境：使用系统默认临时目录
             TempDir::new().unwrap()
         };
-        
+
         let db_path = temp_dir.path().join("test.db");
         let db_url = format!("sqlite:{}", db_path.display());
 
