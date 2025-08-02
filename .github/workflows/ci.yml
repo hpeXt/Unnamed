@@ -30,6 +30,9 @@ jobs:
     - name: Check formatting
       run: cargo fmt -- --check
     
+    - name: Setup sccache
+      uses: mozilla-actions/sccache-action@v0.0.7
+    
     - name: Cache cargo registry
       uses: actions/cache@v3
       with:
@@ -40,9 +43,13 @@ jobs:
         key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
     
     - name: Run clippy
+      env:
+        SCCACHE_GHA_ENABLED: "true"
+        RUSTC_WRAPPER: "sccache"
       run: |
         cargo clippy --lib --bins -- -D warnings
         cargo clippy --all-targets --all-features
+        sccache --show-stats
 
   # 阶段2: 核心测试 (3-5分钟)
   core-tests:
@@ -67,6 +74,9 @@ jobs:
       uses: dtolnay/rust-toolchain@stable
       with:
         targets: wasm32-unknown-unknown
+    
+    - name: Setup sccache
+      uses: mozilla-actions/sccache-action@v0.0.7
     
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -93,12 +103,20 @@ jobs:
         npm run build
     
     - name: Run tests
+      env:
+        SCCACHE_GHA_ENABLED: "true"
+        RUSTC_WRAPPER: "sccache"
       run: |
         cargo test --lib --bins
         cargo test --doc
     
     - name: Build
-      run: cargo build --verbose
+      env:
+        SCCACHE_GHA_ENABLED: "true"
+        RUSTC_WRAPPER: "sccache"
+      run: |
+        cargo build --verbose
+        sccache --show-stats
 
   # 阶段3: 插件构建 (2-3分钟)
   plugin-build:
@@ -114,6 +132,9 @@ jobs:
       with:
         targets: wasm32-unknown-unknown
     
+    - name: Setup sccache
+      uses: mozilla-actions/sccache-action@v0.0.7
+    
     - name: Cache cargo build
       uses: actions/cache@v3
       with:
@@ -123,6 +144,9 @@ jobs:
         key: ${{ runner.os }}-plugins-${{ hashFiles('plugins/**/Cargo.lock') }}
     
     - name: Build plugins
+      env:
+        SCCACHE_GHA_ENABLED: "true"
+        RUSTC_WRAPPER: "sccache"
       run: |
         for plugin in plugins/*/; do
           if [ -f "$plugin/Cargo.toml" ]; then
@@ -132,6 +156,7 @@ jobs:
             cd ../..
           fi
         done
+        sccache --show-stats
 
   # 安全审计 (可选，允许失败)
   security-audit:

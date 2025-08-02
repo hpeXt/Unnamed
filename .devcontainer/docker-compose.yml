@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  dev:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+      args:
+        - USER_UID=${USER_UID:-1000}
+        - USER_GID=${USER_GID:-1000}
+    
+    volumes:
+      # 源代码
+      - ..:/workspace:cached
+      # Cargo缓存
+      - cargo-cache:/workspace/.cargo
+      - rustup-cache:/workspace/.rustup
+      # 构建缓存
+      - target-cache:/workspace/target
+      # 数据持久化
+      - data:/workspace/data
+    
+    # 保持容器运行
+    command: sleep infinity
+    
+    # 网络模式
+    network_mode: host
+    
+    # 环境变量
+    environment:
+      - DATABASE_URL=sqlite:/workspace/data/data.db
+      - RUST_LOG=debug
+      - CARGO_HOME=/workspace/.cargo
+      - RUSTUP_HOME=/workspace/.rustup
+      - RUST_BACKTRACE=1
+      - SQLX_OFFLINE=true
+    
+    # 资源限制（可选）
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+        reservations:
+          cpus: '2'
+          memory: 4G
+
+volumes:
+  cargo-cache:
+    driver: local
+  rustup-cache:
+    driver: local
+  target-cache:
+    driver: local
+  data:
+    driver: local
