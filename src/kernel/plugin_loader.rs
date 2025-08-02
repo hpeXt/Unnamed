@@ -527,18 +527,11 @@ impl PluginLoader {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::TempDir;
 
     async fn create_test_loader() -> PluginLoader {
-        // 在CI环境中，使用更明确的临时目录路径
-        let temp_dir = if std::env::var("CI").is_ok() {
-            TempDir::new_in(".").unwrap_or_else(|_| TempDir::new().unwrap())
-        } else {
-            TempDir::new().unwrap()
-        };
-        let db_path = temp_dir.path().join("test.db");
-        let db_url = format!("sqlite:{}", db_path.display());
-        let storage = Arc::new(Storage::new(&db_url).await.unwrap());
+        // 使用内存数据库进行测试
+        let db_url = "sqlite::memory:";
+        let storage = Arc::new(Storage::new(db_url).await.unwrap());
         let (tx, _rx) = mpsc::channel(100);
         PluginLoader::new(tx, storage, None).unwrap()
     }

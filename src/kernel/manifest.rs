@@ -240,7 +240,7 @@ min_kernel_version = "0.1.0"
 
         // 测试查找清单
         let manifest = find_and_read_manifest(&wasm_path).unwrap();
-        assert_eq!(manifest.plugin.name, "test-plugin");
+        assert_eq!(manifest.plugin.name, "test_plugin");
     }
 
     #[test]

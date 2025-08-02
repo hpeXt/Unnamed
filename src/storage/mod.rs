@@ -424,28 +424,16 @@ impl Storage {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::TempDir;
 
-    async fn setup_test_db() -> (Storage, TempDir) {
-        // 在CI环境中，使用更明确的临时目录路径
-        let temp_dir = if std::env::var("CI").is_ok() {
-            // CI环境：在当前目录下创建临时目录
-            TempDir::new_in(".").unwrap_or_else(|_| TempDir::new().unwrap())
-        } else {
-            // 本地环境：使用系统默认临时目录
-            TempDir::new().unwrap()
-        };
-
-        let db_path = temp_dir.path().join("test.db");
-        let db_url = format!("sqlite:{}", db_path.display());
-
-        let storage = Storage::new(&db_url).await.unwrap();
-        (storage, temp_dir)
+    async fn setup_test_db() -> Storage {
+        // 使用内存数据库进行测试，避免文件系统权限问题
+        let db_url = "sqlite::memory:";
+        Storage::new(db_url).await.unwrap()
     }
 
     #[tokio::test]
     async fn test_store_and_get_data() {
-        let (storage, _temp_dir) = setup_test_db().await;
+        let storage = setup_test_db().await;
 
         let plugin_id = "test_plugin";
         let key = "test_key";
@@ -461,7 +449,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_update_data() {
-        let (storage, _temp_dir) = setup_test_db().await;
+        let storage = setup_test_db().await;
 
         let plugin_id = "test_plugin";
         let key = "test_key";
@@ -481,7 +469,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_delete_data() {
-        let (storage, _temp_dir) = setup_test_db().await;
+        let storage = setup_test_db().await;
 
         let plugin_id = "test_plugin";
         let key = "test_key";
@@ -501,7 +489,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_keys() {
-        let (storage, _temp_dir) = setup_test_db().await;
+        let storage = setup_test_db().await;
 
         let plugin_id = "test_plugin";
         let keys = vec!["key1", "key2", "key3"];
