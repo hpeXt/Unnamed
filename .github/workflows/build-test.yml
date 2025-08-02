@@ -12,6 +12,8 @@ on:
 env:
   CARGO_TERM_COLOR: always
   SQLX_OFFLINE: true
+  TMPDIR: /tmp
+  SQLITE_TMPDIR: /tmp
 
 jobs:
   test-windows:

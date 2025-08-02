@@ -11,6 +11,8 @@ env:
   RUST_BACKTRACE: 1
   SQLX_OFFLINE: true
   DATABASE_URL: sqlite:data.db
+  TMPDIR: /tmp
+  SQLITE_TMPDIR: /tmp
 
 jobs:
   # 第一阶段：基础检查（快速失败）

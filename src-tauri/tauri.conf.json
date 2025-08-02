@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "identifier": "com.minimalkernel.dashboard",
   "build": {
-    "beforeBuildCommand": "",
-    "beforeDevCommand": "",
-    "frontendDist": "../frontend"
+    "beforeBuildCommand": "cd frontend && npm run build",
+    "beforeDevCommand": "cd frontend && npm run dev",
+    "devUrl": "http://localhost:3000",
+    "frontendDist": "../frontend/dist"
   },
   "app": {
     "withGlobalTauri": true,
@@ -27,8 +28,8 @@
       }
     ],
     "security": {
-      "csp": null,
-      "dangerousDisableAssetCspModification": true
+      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' http: https:",
+      "dangerousDisableAssetCspModification": false
     }
   },
   "bundle": {

@@ -126,9 +126,17 @@ function setupBasicListeners() {
     // 诊断按钮
     const diagnosticsButton = document.getElementById('show-diagnostics');
     if (diagnosticsButton) {
-        diagnosticsButton.addEventListener('click', () => {
+        diagnosticsButton.addEventListener('click', async () => {
             console.log('Diagnostics button clicked');
-            showDiagnostics();
+            try {
+                diagnosticsButton.disabled = true;
+                await showDiagnostics();
+            } catch (error) {
+                console.error('诊断显示失败:', error);
+                showDiagnosticMessage(`诊断显示失败: ${error.message}`);
+            } finally {
+                diagnosticsButton.disabled = false;
+            }
         });
     }
     
@@ -136,7 +144,16 @@ function setupBasicListeners() {
     if (addButton) {
         addButton.addEventListener('click', async () => {
             console.log('Add widget clicked');
-            if (isTauri()) {
+            
+            // 提供即时的视觉反馈
+            addButton.disabled = true;
+            const originalText = addButton.textContent;
+            addButton.textContent = '处理中...';
+            
+            try {
+                if (!isTauri()) {
+                    throw new Error('在 Web 模式下运行，无法创建插件容器');
+                }
                 try {
                     // 检查应用是否就绪
                     const ready = await invoke('is_app_ready');
@@ -186,10 +203,16 @@ function setupBasicListeners() {
                     console.error('=== Creation failed ===');
                     console.error('Error details:', error);
                     const errorMessage = error.message || error.toString() || '未知错误';
+                    showDiagnosticMessage(`创建插件失败: ${errorMessage}`);
                     alert('创建失败:\n\n' + errorMessage);
                 }
-            } else {
-                alert('在 Web 模式下运行，无法创建插件容器');
+            } catch (error) {
+                console.error('添加插件失败:', error);
+                alert(error.message);
+            } finally {
+                // 恢复按钮状态
+                addButton.disabled = false;
+                addButton.textContent = originalText;
             }
         });
     }
@@ -198,17 +221,47 @@ function setupBasicListeners() {
     if (layoutButton) {
         layoutButton.addEventListener('click', async () => {
             console.log('Layout settings clicked');
-            if (isTauri()) {
+            
+            layoutButton.disabled = true;
+            const originalText = layoutButton.textContent;
+            layoutButton.textContent = '加载中...';
+            
+            try {
+                if (!isTauri()) {
+                    throw new Error('布局管理仅在 Tauri 环境中可用');
+                }
                 await showLayoutMenu();
+            } catch (error) {
+                console.error('布局设置失败:', error);
+                alert(`布局设置失败: ${error.message}`);
+            } finally {
+                layoutButton.disabled = false;
+                layoutButton.textContent = originalText;
             }
         });
     }
     
     const debugButton = document.getElementById('debug-console');
     if (debugButton) {
-        debugButton.addEventListener('click', () => {
+        debugButton.addEventListener('click', async () => {
             console.log('Debug console clicked');
-            new DebugConsoleManager();
+            
+            debugButton.disabled = true;
+            
+            try {
+                if (!isTauri()) {
+                    throw new Error('调试控制台仅在 Tauri 环境中可用');
+                }
+                new DebugConsoleManager();
+            } catch (error) {
+                console.error('打开调试控制台失败:', error);
+                alert(`打开调试控制台失败: ${error.message}`);
+            } finally {
+                // 延迟一下再启用按钮，避免重复点击
+                setTimeout(() => {
+                    debugButton.disabled = false;
+                }, 500);
+            }
         });
     }
 }
@@ -650,9 +703,13 @@ async function showAllLayouts() {
     }
 }
 
-// 页面加载完成后初始化
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initApp);
+// 使用 window.onload 确保所有资源完全加载
+if (document.readyState === 'complete') {
+    // 如果页面已经完全加载，延迟一下再初始化
+    setTimeout(initApp, 100);
 } else {
-    initApp();
+    window.addEventListener('load', () => {
+        // 页面加载完成后，再延迟一下确保 Tauri API 注入完成
+        setTimeout(initApp, 100);
+    });
 }

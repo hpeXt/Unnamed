@@ -1,72 +1,15 @@
 // Tauri API wrapper for v2
-// 这个文件提供了一个简单的 Tauri API 封装
+// 直接从 @tauri-apps/api 模块导入，这是标准做法
 
-// 尝试获取 Tauri API
-let tauriAPI = null;
-
-// 检查是否在 Tauri 环境中
-if (window.__TAURI__) {
-    tauriAPI = window.__TAURI__;
-} else {
-    console.warn('Tauri API not available - running in web mode');
-}
-
-// 导出 invoke 函数
-export async function invoke(cmd, args) {
-    if (tauriAPI && tauriAPI.core && tauriAPI.core.invoke) {
-        return await tauriAPI.core.invoke(cmd, args);
-    } else {
-        console.warn(`Cannot invoke command '${cmd}' - Tauri API not available`);
-        throw new Error('Tauri API not available');
-    }
-}
+// 导入 Tauri API 模块
+export { invoke } from '@tauri-apps/api/core';
+export { listen, once, emit, emitTo } from '@tauri-apps/api/event';
+export { getVersion } from '@tauri-apps/api/app';
 
 // 检查是否在 Tauri 环境中
 export function isTauri() {
-    return tauriAPI !== null;
-}
-
-// 获取应用版本
-export async function getVersion() {
-    if (tauriAPI && tauriAPI.app) {
-        return await tauriAPI.app.getVersion();
-    }
-    return 'Unknown';
-}
-
-// 导出 Tauri v2 事件 API
-export async function listen(eventName, handler) {
-    if (tauriAPI && tauriAPI.event && tauriAPI.event.listen) {
-        return await tauriAPI.event.listen(eventName, handler);
-    } else {
-        console.warn(`Cannot listen to event '${eventName}' - Tauri API not available`);
-        return () => {}; // 返回空的 unlisten 函数
-    }
-}
-
-export async function once(eventName, handler) {
-    if (tauriAPI && tauriAPI.event && tauriAPI.event.once) {
-        return await tauriAPI.event.once(eventName, handler);
-    } else {
-        console.warn(`Cannot listen once to event '${eventName}' - Tauri API not available`);
-        return () => {};
-    }
-}
-
-export async function emit(eventName, payload) {
-    if (tauriAPI && tauriAPI.event && tauriAPI.event.emit) {
-        return await tauriAPI.event.emit(eventName, payload);
-    } else {
-        console.warn(`Cannot emit event '${eventName}' - Tauri API not available`);
-    }
-}
-
-export async function emitTo(target, eventName, payload) {
-    if (tauriAPI && tauriAPI.event && tauriAPI.event.emitTo) {
-        return await tauriAPI.event.emitTo(target, eventName, payload);
-    } else {
-        console.warn(`Cannot emit to target '${target}' - Tauri API not available`);
-    }
+    // 在 Tauri 环境中，window.__TAURI_INTERNALS__ 总是存在的
+    return typeof window !== 'undefined' && window.__TAURI_INTERNALS__ !== undefined;
 }
 
 // 插件消息总线类 - 基于 Tauri API
@@ -84,6 +27,10 @@ export class PluginMessageBus {
      * @returns {Promise<function>} - 取消监听函数
      */
     async subscribe(topic, callback) {
+        // 导入需要的函数
+        const { invoke } = await import('@tauri-apps/api/core');
+        const { listen } = await import('@tauri-apps/api/event');
+        
         // 1. 告诉后端订阅这个主题
         try {
             await invoke('subscribe_data', { 
@@ -114,6 +61,8 @@ export class PluginMessageBus {
      * @param {string} topic - 要取消订阅的主题
      */
     async unsubscribe(topic) {
+        const { invoke } = await import('@tauri-apps/api/core');
+        
         try {
             await invoke('unsubscribe_data', {
                 topic,
@@ -132,6 +81,8 @@ export class PluginMessageBus {
      * @param {object} data - 消息数据
      */
     async send(targetPluginId, data) {
+        const { invoke } = await import('@tauri-apps/api/core');
+        
         try {
             await invoke('send_to_plugin', {
                 pluginId: targetPluginId,
@@ -148,6 +99,8 @@ export class PluginMessageBus {
      * @param {object} data - 消息数据
      */
     async broadcast(topic, data) {
+        const { emit } = await import('@tauri-apps/api/event');
+        
         // 使用 Tauri 的 emit 功能进行前端广播
         await emit(`plugin-broadcast-${topic}`, {
             from: this.pluginId,
@@ -163,6 +116,8 @@ export class PluginMessageBus {
      * @param {function} callback - 消息处理回调
      */
     async onBroadcast(topic, callback) {
+        const { listen } = await import('@tauri-apps/api/event');
+        
         const unlisten = await listen(`plugin-broadcast-${topic}`, (event) => {
             callback(event.payload);
         });
@@ -197,6 +152,7 @@ export class SystemMonitor {
      * @returns {Promise<object>} 系统统计数据
      */
     async getStats() {
+        const { invoke } = await import('@tauri-apps/api/core');
         return invoke('get_system_stats');
     }
     
@@ -205,6 +161,7 @@ export class SystemMonitor {
      * @returns {Promise<Array>} 进程列表
      */
     async getProcesses() {
+        const { invoke } = await import('@tauri-apps/api/core');
         return invoke('get_processes');
     }
     
@@ -220,6 +177,9 @@ export class SystemMonitor {
         }
         
         this.monitoring = true;
+        
+        const { invoke } = await import('@tauri-apps/api/core');
+        const { listen } = await import('@tauri-apps/api/event');
         
         // 启动后端监控
         await invoke('start_system_monitoring', { intervalMs });
@@ -247,12 +207,8 @@ export class SystemMonitor {
 // 用于调试的辅助函数
 export function debugTauriAPI() {
     console.log('Tauri API available:', isTauri());
-    if (isTauri()) {
-        console.log('Tauri API modules:', {
-            core: !!tauriAPI.core,
-            event: !!tauriAPI.event,
-            app: !!tauriAPI.app,
-            window: !!tauriAPI.window
-        });
+    console.log('Window.__TAURI_INTERNALS__:', window.__TAURI_INTERNALS__);
+    if (window.__TAURI__) {
+        console.log('Window.__TAURI__ (legacy) exists:', !!window.__TAURI__);
     }
 }
