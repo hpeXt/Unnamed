@@ -4,14 +4,109 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Minimal Kernel Dashboard</title>
+    
+    <!-- 预加载关键资源 -->
+    <link rel="modulepreload" href="/src/main.js">
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    
+    <!-- 关键渲染路径的内联 CSS -->
+    <style>
+      /* 防止内容闪烁 */
+      #app { 
+        opacity: 0; 
+        transition: opacity 0.3s ease-in-out;
+      }
+      #app.loaded { 
+        opacity: 1; 
+      }
+      
+      /* 加载指示器样式 */
+      .loading-indicator {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        font-size: 18px;
+        color: #666;
+      }
+      
+      .loading-indicator::after {
+        content: '';
+        display: block;
+        width: 40px;
+        height: 40px;
+        margin: 20px auto;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #3498db;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      /* 错误边界样式 */
+      .error-boundary {
+        padding: 40px;
+        text-align: center;
+        max-width: 600px;
+        margin: 100px auto;
+      }
+      
+      .error-boundary h1 {
+        color: #e74c3c;
+        margin-bottom: 20px;
+      }
+      
+      .error-boundary details {
+        margin-top: 20px;
+        text-align: left;
+        background: #f5f5f5;
+        padding: 10px;
+        border-radius: 4px;
+      }
+      
+      .error-boundary button {
+        margin-top: 20px;
+        padding: 10px 20px;
+        background: #3498db;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      
+      .error-boundary button:hover {
+        background: #2980b9;
+      }
+    </style>
+    
+    <!-- 样式表延迟加载 -->
     <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="components/onboarding/onboarding.css">
-    <link rel="stylesheet" href="components/plugin-selector/plugin-selector.css">
-    <link rel="stylesheet" href="components/plugin-creator/plugin-creator.css">
-    <link rel="stylesheet" href="components/debug-console/debug-console.css">
+    <link rel="preload" href="components/onboarding/onboarding.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="components/plugin-selector/plugin-selector.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="components/plugin-creator/plugin-creator.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="components/debug-console/debug-console.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    
+    <!-- 样式表加载回退 -->
+    <noscript>
+      <link rel="stylesheet" href="components/onboarding/onboarding.css">
+      <link rel="stylesheet" href="components/plugin-selector/plugin-selector.css">
+      <link rel="stylesheet" href="components/plugin-creator/plugin-creator.css">
+      <link rel="stylesheet" href="components/debug-console/debug-console.css">
+    </noscript>
 </head>
 <body>
     <div id="app">
+        <!-- 加载指示器 -->
+        <div class="loading-indicator">
+            <div>正在加载应用...</div>
+        </div>
+        
         <header id="app-header">
             <h1>Minimal Kernel Dashboard</h1>
             <div class="header-actions">
@@ -48,6 +143,6 @@
         <div id="diagnostics-content"></div>
     </div>
 
-    <script type="module" src="js/main-module.js"></script>
+    <script type="module" src="/src/main.js"></script>
 </body>
 </html>

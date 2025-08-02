@@ -530,7 +530,12 @@ mod tests {
     use tempfile::TempDir;
 
     async fn create_test_loader() -> PluginLoader {
-        let temp_dir = TempDir::new().unwrap();
+        // 在CI环境中，使用更明确的临时目录路径
+        let temp_dir = if std::env::var("CI").is_ok() {
+            TempDir::new_in(".").unwrap_or_else(|_| TempDir::new().unwrap())
+        } else {
+            TempDir::new().unwrap()
+        };
         let db_path = temp_dir.path().join("test.db");
         let db_url = format!("sqlite:{}", db_path.display());
         let storage = Arc::new(Storage::new(&db_url).await.unwrap());

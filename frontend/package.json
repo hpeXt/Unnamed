@@ -4,9 +4,11 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "build": "vite build",
-    "preview": "vite preview"
+    "build:analyze": "vite build --mode analyze",
+    "preview": "vite preview",
+    "clean": "rm -rf dist node_modules/.vite"
   },
   "devDependencies": {
     "terser": "^5.43.1",

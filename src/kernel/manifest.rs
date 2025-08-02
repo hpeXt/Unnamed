@@ -219,7 +219,12 @@ min_kernel_version = "0.1.0"
 
     #[test]
     fn test_find_manifest() {
-        let temp_dir = TempDir::new().unwrap();
+        // 在CI环境中，使用更明确的临时目录路径
+        let temp_dir = if std::env::var("CI").is_ok() {
+            TempDir::new_in(".").unwrap_or_else(|_| TempDir::new().unwrap())
+        } else {
+            TempDir::new().unwrap()
+        };
         let plugin_dir = temp_dir.path().join("test-plugin");
         let target_dir = plugin_dir.join("target/wasm32-unknown-unknown/release");
         fs::create_dir_all(&target_dir).unwrap();

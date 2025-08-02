@@ -475,7 +475,12 @@ mod tests {
 
     #[test]
     fn test_config_file_loading() {
-        let temp_dir = TempDir::new().unwrap();
+        // 在CI环境中，使用更明确的临时目录路径
+        let temp_dir = if std::env::var("CI").is_ok() {
+            TempDir::new_in(".").unwrap_or_else(|_| TempDir::new().unwrap())
+        } else {
+            TempDir::new().unwrap()
+        };
         let config_path = temp_dir.path().join("config.toml");
 
         // 创建测试配置文件
