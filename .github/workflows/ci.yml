@@ -38,6 +38,17 @@ jobs:
         targets: wasm32-unknown-unknown
         components: rustfmt, clippy
     
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+    
+    - name: Build frontend
+      run: |
+        cd frontend
+        npm install
+        npm run build
+    
     - name: Cache cargo
       uses: actions/cache@v3
       with:

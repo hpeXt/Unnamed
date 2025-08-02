@@ -51,7 +51,19 @@ jobs:
     - name: Check formatting
       run: cargo fmt -- --check
     
-    # 2. 编译检查
+    # 2. 构建前端（Tauri需要）
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+    
+    - name: Build frontend
+      run: |
+        cd frontend
+        npm install
+        npm run build
+    
+    # 3. 编译检查
     - name: Check compilation
       run: cargo check --all
     

@@ -97,6 +97,17 @@ jobs:
         toolchain: ${{ matrix.rust }}
         targets: wasm32-unknown-unknown
     
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+    
+    - name: Build frontend
+      run: |
+        cd frontend
+        npm install
+        npm run build
+    
     # 暂时禁用 sccache - GitHub Actions缓存服务正在迁移
     # - name: Install sccache (Ubuntu)
     #   if: matrix.os == 'ubuntu-latest'
